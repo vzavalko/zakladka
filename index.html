@@ -1,0 +1,1564 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="Картотека ссылок: папки-списки, перетаскивание, вкладки вместо вкладок.">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="alternate icon" href="favicon.ico">
+<link rel="apple-touch-icon" href="icon.svg">
+<title>Картотека</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=Unbounded:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+img{max-width:100%}
+[hidden]{display:none!important}
+/* Палитра снята с manychat.com: чернила #0F0F0F, белый фон, поверхность
+   #F5F5F5, границы — чернила 10%, текст-подсказка — 40%, маджента #FA0CF7
+   и жёлтый #FFF100 как акценты. Формы: пилюли и скругление 11px. */
+:root{
+  --ink:#0F0F0F; --paper:#FFFFFF; --surf:#F5F5F5; --surf-2:#EDEDED;
+  --text:#0F0F0F; --text-2:rgba(15,15,15,.62); --muted:rgba(15,15,15,.40);
+  --line:rgba(15,15,15,.10); --line-2:rgba(15,15,15,.28);
+  --accent:#FA0CF7; --accent-ink:#FFFFFF; --accent-soft:rgba(250,12,247,.06); --accent-line:rgba(250,12,247,.45);
+  --hi:#FFF100; --hi-ink:#0F0F0F;
+  --danger:#D11A1A; --danger-soft:rgba(209,26,26,.08);
+  --sh-1:0 1px 2px rgba(15,15,15,.05);
+  --sh-2:0 2px 6px rgba(15,15,15,.06), 0 10px 24px -12px rgba(15,15,15,.24);
+  --sh-3:0 12px 24px -8px rgba(15,15,15,.18), 0 32px 64px -28px rgba(15,15,15,.4);
+  --r:11px; --r-s:7px;
+  --d1:#FA0CF7; --d2:#1D6EF5; --d3:#0FA958; --d4:#F5A00F; --d5:#8B3DF0; --d6:#0F0F0F;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
+  --ink:#FFFFFF; --paper:#0C0C0C; --surf:#171717; --surf-2:#202020;
+  --text:#F4F4F4; --text-2:rgba(255,255,255,.66); --muted:rgba(255,255,255,.42);
+  --line:rgba(255,255,255,.12); --line-2:rgba(255,255,255,.30);
+  --accent:#FA0CF7; --accent-ink:#FFFFFF; --accent-soft:rgba(250,12,247,.12); --accent-line:rgba(250,12,247,.55);
+  --hi:#FFF100; --hi-ink:#0F0F0F;
+  --danger:#FF6B6B; --danger-soft:rgba(255,107,107,.12);
+  --sh-1:0 1px 2px rgba(0,0,0,.6);
+  --sh-2:0 2px 6px rgba(0,0,0,.5), 0 10px 24px -12px rgba(0,0,0,.9);
+  --sh-3:0 12px 24px -8px rgba(0,0,0,.6), 0 32px 64px -28px rgba(0,0,0,1);
+  --d1:#FA0CF7; --d2:#4D90FF; --d3:#2FD07E; --d4:#FFBB33; --d5:#A96BFF; --d6:#E8E8E8;
+  color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --ink:#FFFFFF; --paper:#0C0C0C; --surf:#171717; --surf-2:#202020;
+  --text:#F4F4F4; --text-2:rgba(255,255,255,.66); --muted:rgba(255,255,255,.42);
+  --line:rgba(255,255,255,.12); --line-2:rgba(255,255,255,.30);
+  --accent:#FA0CF7; --accent-ink:#FFFFFF; --accent-soft:rgba(250,12,247,.12); --accent-line:rgba(250,12,247,.55);
+  --hi:#FFF100; --hi-ink:#0F0F0F;
+  --danger:#FF6B6B; --danger-soft:rgba(255,107,107,.12);
+  --sh-1:0 1px 2px rgba(0,0,0,.6);
+  --sh-2:0 2px 6px rgba(0,0,0,.5), 0 10px 24px -12px rgba(0,0,0,.9);
+  --sh-3:0 12px 24px -8px rgba(0,0,0,.6), 0 32px 64px -28px rgba(0,0,0,1);
+  --d1:#FA0CF7; --d2:#4D90FF; --d3:#2FD07E; --d4:#FFBB33; --d5:#A96BFF; --d6:#E8E8E8;
+  color-scheme:dark;
+}
+
+*,*::before,*::after{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0; background:var(--paper); color:var(--text);
+  font-family:'Onest',system-ui,-apple-system,'Segoe UI',sans-serif;
+  font-size:14px; line-height:1.45; -webkit-font-smoothing:antialiased; overflow:hidden;
+}
+button,input,textarea,select{font:inherit;color:inherit}
+button{background:none;border:0;padding:0;cursor:pointer}
+::selection{background:var(--hi);color:var(--hi-ink)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+.mono{font-family:'JetBrains Mono',ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums}
+.lbl{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+body.dragging,body.dragging *{cursor:grabbing!important;user-select:none}
+
+.app{height:100%;display:flex;flex-direction:column;min-height:0}
+
+/* ─── верхняя панель ─── */
+.bar{
+  display:flex;align-items:center;gap:9px;flex-wrap:wrap;
+  padding:11px 22px; padding-top:calc(11px + env(safe-area-inset-top,0px));
+  background:var(--paper); border-bottom:1px solid var(--line); position:relative; z-index:30;
+}
+.brand{display:flex;align-items:center;gap:8px;flex:none;margin-right:4px}
+.mark{
+  width:30px;height:30px;border-radius:9px;background:var(--accent);color:#fff;
+  display:grid;place-items:center;flex:none;
+}
+.mark svg{width:17px;height:17px}
+.brand b{
+  font-family:'Unbounded',system-ui,sans-serif;font-weight:700;font-size:15px;
+  letter-spacing:-.01em;text-transform:uppercase;
+}
+@media (max-width:700px){ .brand b{display:none} }
+
+.search{position:relative;display:flex;align-items:center;flex:1 1 200px;max-width:340px;min-width:0}
+.search svg{position:absolute;left:11px;width:14px;height:14px;color:var(--muted);pointer-events:none}
+.search input{
+  width:100%;background:var(--surf);border:1px solid transparent;border-radius:999px;
+  padding:7px 28px 7px 31px;font-size:13px;-webkit-appearance:none;
+}
+.search input::placeholder{color:var(--muted)}
+.search input:focus{outline:none;border-color:var(--accent-line);background:var(--paper)}
+.search kbd{position:absolute;right:11px;font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;pointer-events:none}
+.search input:focus~kbd,.search input:not(:placeholder-shown)~kbd{display:none}
+
+.bar-right{display:flex;align-items:center;gap:7px;margin-left:auto;flex:none}
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;height:33px;padding:0 14px;
+  border-radius:999px;border:1px solid var(--line);background:var(--paper);
+  font-size:12.5px;font-weight:500;letter-spacing:.005em;white-space:nowrap;flex:none;
+  transition:background .13s,border-color .13s,color .13s,transform .1s;
+}
+.btn:hover{background:var(--surf);border-color:var(--line-2)}
+.btn:active{transform:scale(.97)}
+.btn svg{width:14px;height:14px;flex:none}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn-primary:hover{background:var(--accent);border-color:var(--accent);filter:brightness(1.1)}
+.btn-ink{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.btn-ink:hover{background:var(--ink);border-color:var(--ink);filter:brightness(1.25)}
+.btn-ghost{border-color:transparent;background:transparent}
+.btn-ghost:hover{background:var(--surf);border-color:transparent}
+.btn-icon{width:33px;padding:0}
+.btn-danger:hover{color:var(--danger);border-color:var(--danger);background:var(--danger-soft)}
+@media (max-width:620px){ .btn .t{display:none} .btn{padding:0 10px} }
+
+.seg{display:flex;background:var(--surf);border-radius:999px;padding:2px;gap:2px;flex:none}
+.seg button{width:29px;height:27px;border-radius:999px;display:grid;place-items:center;color:var(--muted)}
+.seg button svg{width:14px;height:14px}
+.seg button[aria-pressed="true"]{background:var(--paper);color:var(--text);box-shadow:var(--sh-1)}
+.dot-sync{width:7px;height:7px;border-radius:50%;background:var(--muted);flex:none;margin:0 3px}
+.dot-sync[data-state="ok"]{background:var(--d3)}
+.dot-sync[data-state="busy"]{background:var(--d4);animation:pulse 1s infinite}
+.dot-sync[data-state="local"]{background:var(--d2)}
+.dot-sync[data-state="err"]{background:var(--danger)}
+@keyframes pulse{50%{opacity:.25}}
+
+/* ─── полотно ─── */
+.wrap{flex:1;overflow-y:auto;overscroll-behavior:contain;min-height:0}
+.col{padding:16px 22px 140px}
+
+/* ─── секция-папка ─── */
+.sec{margin-bottom:2px}
+.sec-head{
+  display:flex;align-items:center;gap:11px;height:52px;padding:0 10px 0 0;border-radius:var(--r);
+  position:relative;cursor:pointer;transition:background .12s;
+}
+.sec-head:hover{background:var(--surf)}
+.sec-head.drop-in{background:var(--accent-soft);box-shadow:inset 0 0 0 1.5px var(--accent)}
+.sec-head.drop-before::after,.sec-head.drop-after::after{
+  content:'';position:absolute;left:6px;right:6px;height:3px;background:var(--accent);border-radius:3px;z-index:2;
+}
+.sec-head.drop-before::after{top:-2px} .sec-head.drop-after::after{bottom:-2px}
+.tw{
+  width:22px;height:22px;flex:none;display:grid;place-items:center;color:var(--muted);
+  transition:transform .16s cubic-bezier(.3,.8,.4,1);border-radius:6px;
+}
+.tw svg{width:11px;height:11px}
+.sec.open > .sec-head .tw{transform:rotate(90deg)}
+.sec-dot{width:11px;height:11px;border-radius:3.5px;flex:none}
+.sec-name{
+  font-size:21px;font-weight:600;letter-spacing:-.028em;min-width:0;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.sec.nested > .sec-head .sec-name{font-size:17px;letter-spacing:-.022em}
+.sec.nested > .sec-head{height:46px}
+.sec-name[contenteditable]{
+  outline:1.5px solid var(--accent);border-radius:6px;padding:1px 5px;margin:0 -5px;
+  cursor:text;overflow:visible;text-overflow:clip;background:var(--paper);
+}
+.pill{
+  font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-2);
+  background:var(--surf);border-radius:999px;padding:3px 9px;flex:none;line-height:1.4;
+}
+.sec-head:hover .pill{background:var(--surf-2)}
+.sec-acts{display:flex;align-items:center;gap:2px;margin-left:auto;flex:none;opacity:0;transition:opacity .12s}
+.sec-head:hover .sec-acts,.sec-head:focus-within .sec-acts{opacity:1}
+.sec-acts button{width:27px;height:27px;border-radius:999px;display:grid;place-items:center;color:var(--muted)}
+.sec-acts button:hover{background:var(--surf-2);color:var(--text)}
+.sec-acts svg{width:14px;height:14px}
+.sec-body{padding:2px 0 16px}
+.sec.nested{margin-bottom:0;margin-left:26px}
+
+/* ─── карточки ─── */
+.links{display:grid;gap:10px;grid-template-columns:repeat(5,minmax(0,1fr));padding:4px 0 2px;min-height:16px}
+@media (max-width:1400px){ .links{grid-template-columns:repeat(4,minmax(0,1fr))} }
+@media (max-width:1080px){ .links{grid-template-columns:repeat(3,minmax(0,1fr))} }
+@media (max-width:820px){ .links{grid-template-columns:repeat(2,minmax(0,1fr))} }
+@media (max-width:560px){ .links{grid-template-columns:minmax(0,1fr)} }
+.links.list{grid-template-columns:minmax(0,1fr);gap:2px}
+.links.drop-end{box-shadow:0 3px 0 -1px var(--accent)}
+.card{
+  position:relative;background:var(--paper);border:1px solid var(--line);border-radius:var(--r);
+  transition:border-color .13s,box-shadow .13s,opacity .13s;touch-action:manipulation;
+}
+.card:hover{border-color:var(--line-2);box-shadow:var(--sh-1)}
+.card.lifted{opacity:.28}
+.card.drop-before::after,.card.drop-after::after{content:'';position:absolute;background:var(--accent);border-radius:3px;z-index:2}
+.links:not(.list) .card.drop-before::after{left:-6px;top:1px;bottom:1px;width:3px}
+.links:not(.list) .card.drop-after::after{right:-6px;top:1px;bottom:1px;width:3px}
+.links.list .card.drop-before::after{top:-2px;left:0;right:0;height:3px}
+.links.list .card.drop-after::after{bottom:-2px;left:0;right:0;height:3px}
+.card-main{
+  display:flex;gap:12px;padding:14px;text-decoration:none;color:inherit;
+  align-items:flex-start;border-radius:var(--r);-webkit-user-drag:none;
+}
+.fav{
+  position:relative;overflow:hidden;
+  width:33px;height:33px;flex:none;border-radius:10px;display:grid;place-items:center;
+  font-family:'JetBrains Mono',monospace;font-weight:500;font-size:15px;color:#fff;
+  text-transform:uppercase;line-height:1;
+}
+.fav img{
+  position:absolute;inset:0;width:100%;height:100%;object-fit:contain;
+  padding:5px;background:#fff;border-radius:inherit;
+}
+.links.list .fav img{padding:3px}
+.card-txt{min-width:0;flex:1}
+.card-title{
+  font-size:13.5px;font-weight:500;line-height:1.35;letter-spacing:-.006em;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word;
+}
+.card-title[contenteditable]{
+  -webkit-line-clamp:unset;outline:1.5px solid var(--accent);border-radius:6px;
+  padding:1px 4px;margin:-1px -4px;cursor:text;background:var(--paper);
+}
+.card-host{
+  font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.02em;color:var(--muted);
+  margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.card-where{font-size:10px;color:var(--accent);font-weight:600;margin-top:4px}
+.card-tools{
+  position:absolute;top:6px;right:6px;display:flex;gap:1px;padding:2px;
+  background:var(--paper);border:1px solid var(--line);border-radius:999px;
+  opacity:0;transition:opacity .1s;box-shadow:var(--sh-1);
+}
+.card:hover .card-tools,.card:focus-within .card-tools{opacity:1}
+.card-tools button{width:23px;height:23px;border-radius:999px;display:grid;place-items:center;color:var(--muted)}
+.card-tools button:hover{background:var(--surf);color:var(--text)}
+.card-tools button.rm:hover{background:var(--danger-soft);color:var(--danger)}
+.card-tools svg{width:13px;height:13px}
+.chip-demo{
+  display:inline-block;font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--muted);border:1px solid var(--line);border-radius:4px;
+  padding:0 4px;margin-left:6px;vertical-align:1px;
+}
+.links.list .card{border-color:transparent;background:transparent;border-radius:9px}
+.links.list .card:hover{background:var(--surf);border-color:transparent;box-shadow:none}
+.links.list .card-main{padding:7px 10px;align-items:center;gap:10px}
+.links.list .fav{width:21px;height:21px;font-size:10px;border-radius:6px}
+.links.list .card-title{-webkit-line-clamp:1}
+.links.list .card-txt{display:flex;align-items:baseline;gap:11px}
+.links.list .card-host,.links.list .card-where{margin-top:0;flex:none;max-width:38%}
+.links.list .card-tools{top:3px;right:5px}
+
+.ghost{
+  position:fixed;z-index:400;pointer-events:none;opacity:.96;box-shadow:var(--sh-3);
+  border-radius:var(--r);background:var(--paper);border:1.5px solid var(--accent);transform:rotate(-1.2deg);
+}
+.ghost .card-tools,.ghost .sec-acts,.ghost .tw{display:none}
+.ghost.g-head{padding:0 12px;height:42px;display:flex;align-items:center;gap:9px}
+.ghost.g-list .card-main{padding:7px 10px;align-items:center;gap:10px}
+.ghost.g-list .fav{width:21px;height:21px;font-size:10px;border-radius:6px}
+.ghost.g-list .card-txt{display:flex;align-items:baseline;gap:11px}
+.ghost.g-list .card-host{margin-top:0}
+
+/* ─── прочее ─── */
+.newf{
+  display:flex;align-items:center;gap:8px;height:40px;padding:0 14px;margin-top:8px;border-radius:999px;
+  border:1px dashed var(--line-2);color:var(--muted);font-size:13px;font-weight:500;
+  transition:color .13s,border-color .13s,background .13s;
+}
+.newf:hover{color:var(--accent);border-color:var(--accent);background:var(--accent-soft)}
+.newf svg{width:15px;height:15px}
+.sec-empty{font-size:12.5px;color:var(--muted);padding:6px 0 4px}
+.empty{display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center;padding:70px 20px 40px;color:var(--muted)}
+.empty .mark{width:44px;height:44px;border-radius:14px}
+.empty .mark svg{width:24px;height:24px}
+.empty h2{font-family:'Unbounded',sans-serif;font-weight:600;font-size:21px;color:var(--text);margin:0;letter-spacing:-.02em}
+.empty p{margin:0;font-size:13.5px;max-width:40ch;line-height:1.6}
+.banner{
+  display:flex;align-items:center;gap:12px;margin:0 0 16px;padding:11px 14px;
+  border:1px solid var(--line);border-radius:var(--r);background:var(--surf);font-size:12.5px;color:var(--text-2);
+}
+.banner .btn{margin-left:auto;height:29px;background:var(--paper)}
+
+.veil{position:fixed;inset:0;z-index:100;display:none;place-items:center;pointer-events:none;
+  background:color-mix(in srgb,var(--paper) 72%,transparent);backdrop-filter:blur(4px);padding:20px}
+.veil.on{display:grid}
+.veil-box{border:2px dashed var(--accent);border-radius:20px;background:var(--paper);padding:32px 40px;
+  text-align:center;box-shadow:var(--sh-3);max-width:390px}
+.veil-box svg{width:34px;height:34px;color:var(--accent)}
+.veil-box h2{margin:12px 0 5px;font-size:17px;font-weight:600;letter-spacing:-.015em}
+.veil-box p{margin:0;font-size:13px;color:var(--muted)}
+
+.toasts{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));
+  z-index:120;display:flex;flex-direction:column;gap:8px;align-items:center;width:max-content;max-width:calc(100vw - 32px);pointer-events:none}
+.toast{display:flex;align-items:center;gap:12px;pointer-events:auto;background:var(--ink);color:var(--paper);
+  border-radius:999px;padding:9px 10px 9px 17px;font-size:13px;box-shadow:var(--sh-3);animation:rise .18s cubic-bezier(.2,.8,.3,1)}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}}
+.toast button{color:var(--ink);background:var(--hi);font-weight:600;font-size:12px;padding:4px 11px;border-radius:999px}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+.menu{position:fixed;z-index:200;min-width:198px;background:var(--paper);border:1px solid var(--line);
+  border-radius:14px;box-shadow:var(--sh-3);padding:5px;display:none}
+.menu.on{display:block}
+.menu button{display:flex;align-items:center;gap:10px;width:100%;padding:7px 10px;border-radius:9px;font-size:13px;text-align:left;color:var(--text-2)}
+.menu button:hover{background:var(--surf);color:var(--text)}
+.menu button.rm:hover{background:var(--danger-soft);color:var(--danger)}
+.menu button svg{width:14px;height:14px;flex:none;opacity:.7}
+.menu hr{border:0;border-top:1px solid var(--line);margin:5px 3px}
+.menu .swatches{display:flex;gap:5px;padding:7px 10px 5px}
+.menu .swatches button{width:20px;height:20px;padding:0;border-radius:7px;flex:none}
+.menu .swatches button[aria-pressed="true"]{box-shadow:0 0 0 2px var(--paper),0 0 0 3.5px var(--ink)}
+
+.modal{position:fixed;inset:0;z-index:150;display:none;place-items:center;padding:20px;background:rgba(15,15,15,.34)}
+.modal.on{display:grid}
+.sheet{background:var(--paper);border:1px solid var(--line);border-radius:18px;box-shadow:var(--sh-3);
+  width:100%;max-width:480px;padding:20px;max-height:85vh;overflow-y:auto}
+.sheet h2{margin:0 0 4px;font-size:17px;font-weight:600;letter-spacing:-.018em}
+.sheet .hint{margin:0 0 14px;font-size:12.5px;color:var(--muted);line-height:1.55}
+.field{display:block;margin-bottom:11px}
+.field span{display:block;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+.field input,.field textarea,.field select{width:100%;background:var(--surf);border:1px solid transparent;
+  border-radius:10px;padding:9px 11px;font-size:13px}
+.field textarea{min-height:110px;resize:vertical;font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.65}
+.field input:focus,.field textarea:focus,.field select:focus{outline:none;border-color:var(--accent-line);background:var(--paper)}
+.sheet-foot{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+.sheet ul{margin:0 0 14px;padding-left:19px;font-size:13px;line-height:1.75;color:var(--text-2)}
+</style>
+
+</head>
+<body>
+<div class="app">
+  <header class="bar">
+    <div class="brand">
+      <span class="mark"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M1.9 12.6V3.4h4.2l1.4 1.9h6.6v7.3a.8.8 0 0 1-.8.8H2.7a.8.8 0 0 1-.8-.8Z"/></svg></span>
+      <b>Картотека</b>
+    </div>
+    <label class="search">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5 14 14" stroke-linecap="round"/></svg>
+      <input id="q" type="search" placeholder="Поиск по всем папкам" autocomplete="off" spellcheck="false">
+      <kbd>/</kbd>
+    </label>
+    <div class="bar-right">
+      <div class="seg" role="group" aria-label="Вид">
+        <button id="vGrid" aria-pressed="true" aria-label="Плитка"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="5" height="5" rx="1.4"/><rect x="9" y="2" width="5" height="5" rx="1.4"/><rect x="2" y="9" width="5" height="5" rx="1.4"/><rect x="9" y="9" width="5" height="5" rx="1.4"/></svg></button>
+        <button id="vList" aria-pressed="false" aria-label="Список"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M2.5 4h11M2.5 8h11M2.5 12h11"/></svg></button>
+      </div>
+      <button class="btn btn-icon btn-ghost" id="foldBtn" aria-label="Свернуть все папки" title="Свернуть или развернуть все">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 6.2 8 3.4l3 2.8M11 9.8 8 12.6l-3-2.8"/></svg>
+      </button>
+      <i class="dot-sync" id="sync" data-state="local" title="Хранилище"></i>
+      <button class="btn btn-primary" id="addBtn">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 3.2v9.6M3.2 8h9.6"/></svg>
+        <span class="t">Ссылка</span>
+      </button>
+      <button class="btn btn-icon btn-ghost" id="moreBtn" aria-label="Ещё">
+        <svg viewBox="0 0 16 16" fill="currentColor"><circle cx="3" cy="8" r="1.5"/><circle cx="8" cy="8" r="1.5"/><circle cx="13" cy="8" r="1.5"/></svg>
+      </button>
+    </div>
+  </header>
+  <div class="wrap" id="wrap"><div class="col" id="col"></div></div>
+</div>
+
+<div class="veil" id="veil">
+  <div class="veil-box">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v11"/><path d="M8 10.5 12 14.5 16 10.5"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>
+    <h2>Отпустите — сохраню</h2>
+    <p id="veilSub"></p>
+  </div>
+</div>
+<div class="toasts" id="toasts"></div>
+<div class="menu" id="menu"></div>
+<div class="modal" id="modal"><div class="sheet" id="sheet"></div></div>
+<input type="file" id="importFile" accept="application/json,.json" hidden>
+
+<script>
+(function(){
+'use strict';
+const $ = s => document.querySelector(s);
+const uid = () => Math.random().toString(36).slice(2,9) + Date.now().toString(36).slice(-4);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const clamp = (n,a,b) => Math.max(a, Math.min(b, n));
+const DOT = ['var(--d1)','var(--d2)','var(--d3)','var(--d4)','var(--d5)','var(--d6)'];
+
+function urlOf(raw){
+  let s = String(raw || '').trim(); if(!s) return null;
+  if(!/^[a-z][a-z0-9+.-]*:/i.test(s)) s = 'https://' + s;
+  try{ const u = new URL(s); return /^https?:|^ftp:|^file:/i.test(u.protocol) ? u.href : null; }catch(e){ return null; }
+}
+function hostOf(u){ try{ return new URL(u).hostname.replace(/^www\./,''); }catch(e){ return u; } }
+/* Имя ссылки выводим из самого адреса: страница живёт под строгим CSP и
+   сходить за <title> чужого сайта не может — любой запрос на другой домен
+   блокируется. Название из перетаскивания или из буфера всегда в приоритете,
+   это разбор на случай, когда есть только голый адрес.
+   weak:true — из адреса ничего осмысленного не вытащить; такую карточку
+   сразу открываем на переименование, чтобы не оставлять «youtube.com». */
+function deriveTitle(raw){
+  let url; try{ url = new URL(raw); }catch(e){ return { title:String(raw), weak:true }; }
+  const host = url.hostname.replace(/^www\./,'');
+  const base = host.split('.').slice(-2).join('.');
+  const dec = x => { try{ return decodeURIComponent(x); }catch(e){ return x; } };
+  const seg = url.pathname.split('/').filter(Boolean).map(dec);
+  const q = url.searchParams;
+  const nth = i => seg[i] || '';
+  const words = x => String(x || '').replace(/\.(html?|php|aspx?|jsp|md)$/i,'')
+                      .replace(/[-_+]+/g,' ').replace(/\s+/g,' ').trim();
+  const cap = x => x ? x[0].toUpperCase() + x.slice(1) : '';
+  const hostName = cap(base.split('.')[0]);
+  const cut = x => x.length > 80 ? x.slice(0,78).trim() + '…' : x;
+  const vowels = x => (x.match(/[aeiouyаеёиоуыэюя]/gi) || []).length;
+  /* отличаем человеческий кусок пути от идентификатора */
+  const looksId = x => {
+    if(/^\d+$/.test(x)) return true;
+    if(/^[0-9a-f]{8,}$/i.test(x)) return true;
+    if(/[-_ ]/.test(x)) return false;
+    if(/[a-z]/.test(x) && /[A-Z]/.test(x) && /\d/.test(x)) return true;
+    if(/\d/.test(x) && x.length > 7) return true;
+    if(x.length > 14 && vowels(x) / x.length < 0.32) return true;
+    return false;
+  };
+  const wordy = x => {
+    const w = words(x);
+    return w.length >= 3 && w.length <= 90 && /[a-zA-Zа-яёА-ЯЁ]{3}/.test(w) &&
+           !looksId(String(x).replace(/\.(html?|php|aspx?)$/i,''));
+  };
+  const tidy = x => cap(words(x)
+      .replace(/\s+[0-9a-f]{7,}$/i,'')   /* хвост-идентификатор: My-Page-a1b2c3d */
+      .replace(/^\d{3,}\s+/,'')          /* числовой префикс: 1234567-kak-my... */
+      .replace(/\s+\d{5,}$/,'')
+      .trim());
+  const deepest = () => { for(let i = seg.length - 1; i >= 0; i--) if(wordy(seg[i])) return tidy(seg[i]); return ''; };
+  /* служебные куски пути — сами по себе названием быть не могут */
+  const GENERIC = /^(search|results?|index|home|main|edit|view|watch|page|default|posts?|articles?|items?|list|new|all|details?|docs?|blog|news|video|ru|en|www)$/i;
+
+  if(base === 'youtube.com' || host === 'youtu.be'){
+    if(q.get('list') || nth(0) === 'playlist') return { title:'YouTube — плейлист', weak:true };
+    if(nth(0).startsWith('@')) return { title:'YouTube — канал ' + nth(0), weak:false };
+    if(nth(0) === 'shorts') return { title:'YouTube — шортс', weak:true };
+    return { title:'YouTube — видео', weak:true };
+  }
+  if(base === 'github.com'){
+    if(seg.length >= 4 && nth(2) === 'pull') return { title:nth(0) + '/' + nth(1) + ' — PR #' + nth(3), weak:false };
+    if(seg.length >= 4 && nth(2) === 'issues') return { title:nth(0) + '/' + nth(1) + ' — issue #' + nth(3), weak:false };
+    if(seg.length >= 2) return { title:nth(0) + '/' + nth(1), weak:false };
+    if(seg.length === 1) return { title:'GitHub — ' + nth(0), weak:false };
+    return { title:'GitHub', weak:true };
+  }
+  if(base === 'wikipedia.org' && nth(0) === 'wiki') return { title:words(nth(1)) + ' — Википедия', weak:false };
+  if(base === 'reddit.com'){
+    if(nth(0) === 'r' && wordy(nth(4))) return { title:tidy(nth(4)) + ' — r/' + nth(1), weak:false };
+    if(nth(0) === 'r' && nth(1)) return { title:'r/' + nth(1), weak:false };
+  }
+  if(base === 'stackoverflow.com' && nth(0) === 'questions' && wordy(nth(2))) return { title:tidy(nth(2)), weak:false };
+  if(base === 'habr.com'){ const t = deepest(); return t ? { title:t + ' — Хабр', weak:false } : { title:'Хабр — статья', weak:true }; }
+  if(base === 'figma.com'){
+    const i = Math.max(seg.indexOf('file'), seg.indexOf('design'), seg.indexOf('board'), seg.indexOf('proto'), seg.indexOf('slides'));
+    if(i >= 0 && wordy(nth(i + 2))) return { title:tidy(nth(i + 2)) + ' — Figma', weak:false };
+    return { title:'Figma — файл', weak:true };
+  }
+  if(host === 'docs.google.com'){
+    const kind = { document:'Google Docs', spreadsheets:'Google Sheets', presentation:'Google Slides', forms:'Google Forms' }[nth(0)];
+    return { title:(kind || 'Google') + ' — документ', weak:true };
+  }
+  if(base === 'notion.so' || base === 'notion.site'){
+    const t = tidy(seg[seg.length - 1] || '');
+    return t && !looksId(seg[seg.length - 1]) ? { title:t + ' — Notion', weak:false } : { title:'Notion — страница', weak:true };
+  }
+  if(base === 'medium.com'){ const t = deepest(); return t ? { title:t, weak:false } : { title:'Medium', weak:true }; }
+  if(base === 'x.com' || base === 'twitter.com'){
+    if(nth(1) === 'status') return { title:'Пост @' + nth(0), weak:false };
+    if(nth(0)) return { title:'@' + nth(0) + ' — X', weak:false };
+  }
+  if(host === 't.me') return { title:nth(0) ? 'Telegram — ' + nth(0) : 'Telegram', weak:!nth(0) };
+  if(base === 'arxiv.org' && nth(1)) return { title:'arXiv:' + nth(1), weak:false };
+  if(base === 'npmjs.com' && nth(0) === 'package') return { title:seg.slice(1).join('/') + ' — npm', weak:false };
+  if(base === 'linkedin.com' && nth(0) === 'in' && nth(1)) return { title:tidy(nth(1)) + ' — LinkedIn', weak:false };
+  if(base === 'claude.ai') return nth(0) === 'artifact'
+      ? { title:'Claude — артефакт', weak:true }
+      : { title:'Claude — диалог', weak:true };
+  if(base === 'chatgpt.com' || base === 'chat.openai.com') return { title:'ChatGPT — диалог', weak:true };
+
+  const wordies = seg.filter(wordy).map(tidy).filter(Boolean);
+  const last = wordies.length ? wordies[wordies.length - 1] : '';
+  const generic = x => GENERIC.test(String(x).replace(/\s+/g,''));
+
+  /* поисковый запрос описывает страницу лучше, чем слово «search» в пути */
+  if(!last || generic(last)){
+    for(const k of ['q','query','search','text','title','name','s']){
+      const v = q.get(k);
+      if(v && v.trim()) return { title:cut(hostName + ' — ' + v.trim()), weak:false };
+    }
+  }
+  if(last && !generic(last)){
+    /* короткий хвост без контекста — добавляем предыдущий кусок пути:
+       /engine/install/ubuntu/ → «Install · Ubuntu» */
+    const prev = wordies.length > 1 ? wordies[wordies.length - 2] : '';
+    if(prev && last.length < 14 && !generic(prev)) return { title:cut(prev + ' · ' + last), weak:false };
+    return { title:cut(last), weak:false };
+  }
+  if(last) return { title:cut(hostName + ' — ' + last), weak:true };
+  if(seg.length) return { title:cut(hostName + ' — ' + words(seg[0]).slice(0,40)), weak:true };
+  return { title:hostName, weak:true };
+}
+const titleFromUrl = u => deriveTitle(u).title;
+/* Иконки рисуем сами: под CSP артефакта картинка с чужого домена не загрузится. */
+const BRAND = {
+  'youtube.com':'#E5322D','github.com':'#24292F','google.com':'#3B7DED','docs.google.com':'#3B7DED',
+  'figma.com':'#A259FF','notion.so':'#33302E','x.com':'#16181C','twitter.com':'#16181C',
+  'reddit.com':'#FF4500','stackoverflow.com':'#EE7127','wikipedia.org':'#3E4145','habr.com':'#4A8FD0',
+  'telegram.org':'#2AA0DA','t.me':'#2AA0DA','linkedin.com':'#0A66C2','medium.com':'#1A1A1A',
+  'dribbble.com':'#E24D87','behance.net':'#1C6EFF','claude.ai':'#C86A4A','openai.com':'#0F9D8C',
+  'chatgpt.com':'#0F9D8C','vimeo.com':'#17B3E8','apple.com':'#4C4C50','yandex.ru':'#E93325',
+  'vc.ru':'#E8483C','arxiv.org':'#A6172C','anthropic.com':'#C86A4A','manychat.com':'#FA0CF7'
+};
+function favOf(u){
+  const host = hostOf(u), parts = host.split('.');
+  const sld = parts.length > 1 ? parts[parts.length-2] : (parts[0] || '?');
+  let color = BRAND[host] || BRAND[parts.slice(-2).join('.')];
+  if(!color){
+    let h = 0; for(let i=0;i<host.length;i++) h = (h*31 + host.charCodeAt(i)) >>> 0;
+    color = 'hsl(' + (h % 360) + ' 62% 46%)';
+  }
+  return { letter:(sld[0] || '?'), color };
+}
+function plural(n,a,b,c){
+  const m = n % 100, k = n % 10;
+  if(m > 10 && m < 20) return c;
+  if(k === 1) return a;
+  if(k >= 2 && k <= 4) return b;
+  return c;
+}
+
+/* ─────────────────────── состояние ─────────────────────── */
+const LS = 'kartoteka.v1', LS_UI = 'kartoteka.ui';
+let state = { v:1, folders:[], links:[] };
+let ui = { view:'grid', q:'' };
+let iconMode = true;
+const undoStack = [], redoStack = [];
+const lsRead = (k, fb) => { try{ const s = localStorage.getItem(k); return s ? JSON.parse(s) : fb; }catch(e){ return fb; } };
+const lsWrite = (k, v) => { try{ localStorage.setItem(k, JSON.stringify(v)); return true; }catch(e){ return false; } };
+
+function seed(){
+  const f = (name,color,parent) => ({ id:uid(), name, parent:parent||null, order:0, color, open:true });
+  const work = f('Работа',0), read = f('Читать позже',2), tools = f('Инструменты',1), design = f('Дизайн',4);
+  [work,read,tools].forEach((x,i)=>x.order=i);
+  design.parent = work.id;
+  const L = (folder,url,title,order) => ({ id:uid(), folder, url, title, order, added:Date.now(), demo:true });
+  return { v:1, folders:[work,design,read,tools], links:[
+    L(work.id,'https://github.com/pulls','Мои пул-реквесты',0),
+    L(work.id,'https://calendar.google.com/','Календарь',1),
+    L(design.id,'https://www.figma.com/files','Файлы Figma',0),
+    L(design.id,'https://fonts.google.com/','Google Fonts',1),
+    L(read.id,'https://news.ycombinator.com/','Hacker News',0),
+    L(read.id,'https://habr.com/ru/feed/','Хабр — лента',1),
+    L(tools.id,'https://regex101.com/','regex101 — отладка регулярок',0),
+    L(tools.id,'https://caniuse.com/','Can I use',1),
+    L(null,'https://claude.ai/','Claude',0)
+  ]};
+}
+const byId = id => state.folders.find(f => f.id === id) || null;
+const kidsOf = p => state.folders.filter(f => (f.parent || null) === (p || null)).sort((a,b)=>a.order-b.order);
+const linksIn = f => state.links.filter(l => (l.folder || null) === (f || null)).sort((a,b)=>a.order-b.order);
+const isOpen = f => f.open !== false;
+function subtreeIds(id){ const out = [id]; for(const k of kidsOf(id)) out.push(...subtreeIds(k.id)); return out; }
+const countDeep = id => subtreeIds(id).reduce((n,fid)=> n + state.links.filter(l => l.folder === fid).length, 0);
+function pathOf(id){ const out = []; let cur = byId(id); while(cur){ out.unshift(cur); cur = cur.parent ? byId(cur.parent) : null; } return out; }
+function isAncestor(a,b){ let cur = byId(b); while(cur){ if(cur.parent === a) return true; cur = cur.parent ? byId(cur.parent) : null; } return false; }
+const reindex = list => list.forEach((x,i)=> x.order = i);
+
+/* ─────────────────────── хранение ─────────────────────── */
+/* Свой домен — своё хранилище: всё лежит в localStorage этого браузера.
+   Между устройствами не ездит, поэтому выгрузка в JSON тут не украшение. */
+let saveTimer = null, heldRemote = null;
+const snapshot = () => JSON.stringify(state);
+
+function pushUndo(){ undoStack.push(snapshot()); if(undoStack.length > 40) undoStack.shift(); redoStack.length = 0; }
+function commit(){
+  lsWrite(LS, state);
+  render();
+  setSync('busy');
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => setSync(lsWrite(LS, state) === false ? 'err' : 'ok'), 220);
+}
+function restore(json){ state = JSON.parse(json); commit(); }
+function flushHeldRemote(){}
+
+const SYNC_TXT = { ok:'Сохранено в этом браузере', busy:'Сохраняю…', err:'Не удалось сохранить — возможно, кончилось место' };
+function setSync(st){ const d = $('#sync'); d.dataset.state = st; d.title = SYNC_TXT[st] || ''; }
+
+function initStore(){
+  iconMode = lsRead('kartoteka.icons', true) !== false;
+  state = lsRead(LS, null) || seed();
+  ui = Object.assign(ui, lsRead(LS_UI, {}));
+  ui.q = '';
+  setView(ui.view || 'grid');
+  setSync('ok');
+}
+
+/* ─────────────────────── значки ─────────────────────── */
+const ICO = {
+  caret:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.2 10.8 8 6 12.8"/></svg>',
+  dots:'<svg viewBox="0 0 16 16" fill="currentColor"><circle cx="3" cy="8" r="1.5"/><circle cx="8" cy="8" r="1.5"/><circle cx="13" cy="8" r="1.5"/></svg>',
+  ext:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2.5H13.5V6.5M13.5 2.5 7.5 8.5M12 9.8v2.9a.8.8 0 0 1-.8.8H3.3a.8.8 0 0 1-.8-.8V4.8a.8.8 0 0 1 .8-.8h2.9"/></svg>',
+  plus:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M8 3.4v9.2M3.4 8h9.2"/></svg>',
+  edit:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M11.2 2.6 13.4 4.8 5.6 12.6l-3 .8.8-3z"/></svg>',
+  rm:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3.5 4.5h9M6.5 4.5V3h3v1.5M5 4.5l.5 8.5h5l.5-8.5"/></svg>',
+  copy:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><rect x="5.5" y="5.5" width="8" height="8" rx="1.6"/><path d="M10.5 3.5v-.5a1 1 0 0 0-1-1h-6a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1H4"/></svg>',
+  folder:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M1.8 12.5v-9h4l1.4 1.8h7v7.2a.8.8 0 0 1-.8.8H2.6a.8.8 0 0 1-.8-.8Z"/></svg>',
+  up:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 13V3.5M4 7.5 8 3.5l4 4"/></svg>'
+};
+
+/* ─────────────────────── отрисовка ─────────────────────── */
+function render(){ renderCol(); reapplyLift(); lsWrite(LS_UI, { view:ui.view, rootOpen:ui.rootOpen }); }
+
+const searchHits = () => {
+  const q = ui.q.toLowerCase();
+  return state.links.filter(l => (l.title || '').toLowerCase().includes(q) || l.url.toLowerCase().includes(q));
+};
+const hasMatch = (fid, m) => subtreeIds(fid).some(id => state.links.some(l => l.folder === id && m.has(l.id)));
+
+function renderCol(){
+  const col = $('#col');
+  if(!state.folders.length && !state.links.length){ col.innerHTML = emptyAll(); return; }
+
+  const m = ui.q ? new Set(searchHits().map(l => l.id)) : null;
+  let h = '';
+  if(!ui.q && state.links.some(l => l.demo))
+    h += '<div class="banner"><span>Папки и ссылки — пример, чтобы было видно устройство.</span>' +
+         '<button class="btn" data-act="clear-demo">Убрать пример</button></div>';
+
+  const rootLinks = m ? linksIn(null).filter(l => m.has(l.id)) : linksIn(null);
+  if(rootLinks.length) h += secRoot(rootLinks, !!m);
+  for(const f of kidsOf(null)) h += secFolder(f, m, 0);
+
+  if(m && !m.size) h += emptyBox('Ничего не нашлось', 'По запросу «' + esc(ui.q) + '» нет ни одной ссылки.');
+  if(!ui.q) h += '<button class="newf" data-act="new-folder">' + ICO.plus + 'Новая папка</button>';
+  col.innerHTML = h;
+}
+
+function secHead(fid, name, dot, count, opts){
+  const o = opts || {};
+  return '<div class="sec-head" data-fid="' + fid + '">' +
+    '<i class="tw">' + ICO.caret + '</i>' +
+    '<i class="sec-dot" style="background:' + dot + '"></i>' +
+    '<span class="sec-name"' + (o.nameEditable ? ' data-name' : '') + '>' + esc(name) + '</span>' +
+    '<span class="pill">' + count + '</span>' +
+    '<span class="sec-acts">' +
+      '<button data-act="add-here" title="Добавить ссылку сюда" aria-label="Добавить ссылку сюда">' + ICO.plus + '</button>' +
+      '<button data-act="open-all" title="Открыть все ссылки" aria-label="Открыть все ссылки">' + ICO.ext + '</button>' +
+      (o.menu === false ? '' : '<button data-act="menu" title="Ещё" aria-label="Ещё">' + ICO.dots + '</button>') +
+    '</span></div>';
+}
+function secRoot(links, searching){
+  const open = searching || ui.rootOpen !== false;
+  return '<div class="sec' + (open ? ' open' : '') + '" data-fid="">' +
+    secHead('', 'Без папки', 'var(--muted)', linksIn(null).length, { menu:false }) +
+    (open ? '<div class="sec-body">' + linksGrid(links, '') + '</div>' : '') + '</div>';
+}
+function secFolder(f, m, depth){
+  if(m && !hasMatch(f.id, m)) return '';
+  const open = m ? true : isOpen(f);
+  const kids = kidsOf(f.id);
+  const links = m ? linksIn(f.id).filter(l => m.has(l.id)) : linksIn(f.id);
+  let body = '';
+  if(open){
+    for(const k of kids) body += secFolder(k, m, depth + 1);
+    body += linksGrid(links, f.id);
+    if(!m && !kids.length && !links.length) body += '<div class="sec-empty">Пусто — перетащите сюда ссылку или нажмите «+».</div>';
+  }
+  return '<div class="sec' + (open ? ' open' : '') + (depth ? ' nested' : '') + '" data-fid="' + f.id + '">' +
+    secHead(f.id, f.name, DOT[f.color % 6], countDeep(f.id), { nameEditable:true }) +
+    (open ? '<div class="sec-body">' + body + '</div>' : '') + '</div>';
+}
+function linksGrid(links, fid){
+  return '<div class="links' + (ui.view === 'list' ? ' list' : '') + '" data-fid="' + fid + '">' +
+    links.map(card).join('') + '</div>';
+}
+function card(l){
+  const f = favOf(l.url);
+  return '<div class="card" data-id="' + l.id + '">' +
+    '<a class="card-main" draggable="false" href="' + esc(l.url) + '" target="_blank" rel="noopener noreferrer">' +
+      '<i class="fav" style="background:' + f.color + '">' + esc(f.letter) + favImg(l.url) + '</i>' +
+      '<span class="card-txt">' +
+        '<span class="card-title" data-title>' + esc(l.title || titleFromUrl(l.url)) + (l.demo ? '<i class="chip-demo">пример</i>' : '') + '</span>' +
+        '<span class="card-host">' + esc(hostOf(l.url)) + '</span>' +
+      '</span></a>' +
+    '<div class="card-tools">' +
+      '<button data-act="edit" title="Переименовать" aria-label="Переименовать">' + ICO.edit + '</button>' +
+      '<button data-act="menu" title="Ещё" aria-label="Ещё">' + ICO.dots + '</button>' +
+      '<button data-act="rm" class="rm" title="Удалить" aria-label="Удалить">' + ICO.rm + '</button>' +
+    '</div></div>';
+}
+/* Значок сайта: сначала DuckDuckGo (широкий охват и приличное качество),
+   если не отдал — favicon.ico самого сайта, если и его нет — остаётся буква.
+   Ни один запрос не уходит на сервер Картотеки: его попросту нет. */
+function favImg(url){
+  if(!iconMode) return '';
+  let host = ''; try{ host = new URL(url).hostname; }catch(e){ return ''; }
+  if(!host) return '';
+  const own = 'https://' + host + '/favicon.ico';
+  return '<img loading="lazy" alt="" src="https://icons.duckduckgo.com/ip3/' + encodeURIComponent(host) + '.ico"' +
+         ' onerror="this.onerror=null;this.src=&quot;' + own + '&quot;;this.dataset.fallback=1;' +
+         'this.addEventListener(&apos;error&apos;,()=>this.remove())">';
+}
+function emptyAll(){
+  return '<div class="empty">' +
+    '<span class="mark"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M1.9 12.6V3.4h4.2l1.4 1.9h6.6v7.3a.8.8 0 0 1-.8.8H2.7a.8.8 0 0 1-.8-.8Z"/></svg></span>' +
+    '<h2>Пока пусто</h2>' +
+    '<p>Перетащите сюда значок слева от адреса в адресной строке Chrome, вставьте адреса из буфера (⌘V) или нажмите «Ссылка».</p>' +
+    '<button class="btn btn-ink" data-act="new-folder">' + ICO.plus + 'Создать первую папку</button></div>';
+}
+function emptyBox(h2, p){ return '<div class="empty"><h2>' + h2 + '</h2><p>' + p + '</p></div>'; }
+
+/* ─────────────────────── названия из сети ───────────────────────
+   Браузер не даст прочитать чужую страницу (это запрещает CORS), но сервисы
+   с oEmbed отвечают всем — оттуда и берём настоящее название. Для остальных
+   сайтов это умеет расширение: у него таких ограничений нет. */
+const OEMBED = [
+  [/(^|\.)youtube\.com$|(^|\.)youtu\.be$/i, u => 'https://www.youtube.com/oembed?format=json&url=' + encodeURIComponent(u)],
+  [/(^|\.)vimeo\.com$/i,      u => 'https://vimeo.com/api/oembed.json?url=' + encodeURIComponent(u)],
+  [/(^|\.)soundcloud\.com$/i, u => 'https://soundcloud.com/oembed?format=json&url=' + encodeURIComponent(u)],
+  [/(^|\.)flickr\.com$/i,     u => 'https://www.flickr.com/services/oembed?format=json&url=' + encodeURIComponent(u)],
+  [/(^|\.)ted\.com$/i,        u => 'https://www.ted.com/services/v1/oembed.json?url=' + encodeURIComponent(u)]
+];
+function oembedFor(url){
+  let host; try{ host = new URL(url).hostname; }catch(e){ return null; }
+  for(const [re, make] of OEMBED) if(re.test(host)) return make(url);
+  return null;
+}
+async function oembedTitle(url){
+  const api = oembedFor(url);
+  if(!api) return '';
+  try{
+    const ac = new AbortController();
+    const t = setTimeout(() => ac.abort(), 8000);
+    const r = await fetch(api, { signal: ac.signal, credentials: 'omit' });
+    clearTimeout(t);
+    if(!r.ok) return '';
+    const j = await r.json();
+    return j && j.title ? String(j.title).replace(/\s+/g,' ').trim() : '';
+  }catch(e){ return ''; }
+}
+/* Название приезжает позже вставки — подменяем его на месте, когда дойдёт. */
+async function enrichOne(id){
+  const l = state.links.find(x => x.id === id);
+  if(!l) return false;
+  const t = await oembedTitle(l.url);
+  const still = state.links.find(x => x.id === id);
+  if(!t || !still || editing) return false;
+  if(still.title === t) return true;
+  still.title = t; delete still.demo;
+  lsWrite(LS, state); render();
+  return true;
+}
+async function finishAdd(made){
+  if(!made.length) return;
+  if(made.length > 1){ for(const m of made) if(m.oembed) await enrichOne(m.id); return; }
+  const m = made[0];
+  if(m.oembed && await enrichOne(m.id)) return;
+  if(m.weak) nameIfWeak([m]);
+}
+
+/* ─────────────────────── действия ─────────────────────── */
+const subtreeLinks = id => subtreeIds(id).reduce((a,fid)=> a.concat(linksIn(fid)), []);
+
+function addLinks(items, folder){
+  if(!items.length) return [];
+  pushUndo();
+  let order = linksIn(folder).length;
+  const made = [];
+  for(const it of items){
+    const d = deriveTitle(it.url);
+    const l = { id:uid(), folder:folder || null, url:it.url, title:it.title || d.title, order:order++, added:Date.now() };
+    state.links.push(l);
+    made.push({ id:l.id, weak:!it.title && d.weak, oembed:!it.title && !!oembedFor(it.url) });
+  }
+  if(folder){ const f = byId(folder); if(f) f.open = true; }
+  else ui.rootOpen = true;
+  commit();
+  return made;
+}
+/* Одну ссылку с невнятным именем сразу открываем на переименование:
+   название уже выделено, достаточно начать печатать. */
+function nameIfWeak(made){
+  if(made.length !== 1 || !made[0].weak) return false;
+  const id = made[0].id;
+  requestAnimationFrame(() => {
+    const el = document.querySelector('.card[data-id="' + id + '"] [data-title]');
+    if(!el) return;
+    el.scrollIntoView({ block:'center', behavior:'smooth' });
+    editInline(el, v => { const l = state.links.find(x => x.id === id); if(l){ pushUndo(); l.title = v; commit(); } });
+  });
+  return true;
+}
+function createFolder(parent){
+  pushUndo();
+  const f = { id:uid(), name:'Новая папка', parent:parent || null, order:kidsOf(parent).length, color:state.folders.length % 6, open:true };
+  state.folders.push(f);
+  if(parent){ const p = byId(parent); if(p) p.open = true; }
+  commit();
+  requestAnimationFrame(() => {
+    const el = document.querySelector('.sec[data-fid="' + f.id + '"] [data-name]');
+    if(el){ el.scrollIntoView({ block:'center', behavior:'smooth' }); editInline(el, v => renameFolder(f.id, v)); }
+  });
+}
+function renameFolder(id, name){
+  const f = byId(id); if(!f) return;
+  name = String(name || '').trim().slice(0,80);
+  if(!name || name === f.name) return render();
+  pushUndo(); f.name = name; commit();
+}
+function toggleFolder(id){
+  if(!id){ ui.rootOpen = ui.rootOpen === false; render(); return; }
+  const f = byId(id); if(!f) return;
+  pushUndo(); f.open = !isOpen(f); commit();
+}
+function foldAll(){
+  const anyOpen = state.folders.some(isOpen);
+  pushUndo();
+  state.folders.forEach(f => f.open = !anyOpen);
+  ui.rootOpen = !anyOpen;
+  commit();
+  toast(anyOpen ? 'Все папки свёрнуты' : 'Все папки раскрыты');
+}
+async function removeFolder(id){
+  const f = byId(id); if(!f) return;
+  const n = countDeep(id);
+  if(n && !await ask('Удалить «' + f.name + '»?',
+      'Внутри ' + n + ' ' + plural(n,'ссылка','ссылки','ссылок') + '. Они переедут на уровень выше, вложенные папки удалятся.', 'Удалить', true)) return;
+  const before = snapshot(), ids = subtreeIds(id), up = f.parent || null;
+  pushUndo();
+  state.folders = state.folders.filter(x => !ids.includes(x.id));
+  state.links.forEach(l => { if(ids.includes(l.folder)) l.folder = up; });
+  reindex(linksIn(up)); reindex(kidsOf(up));
+  commit();
+  toast('Папка удалена', before);
+}
+function removeLink(id){
+  const l = state.links.find(x => x.id === id); if(!l) return;
+  const before = snapshot();
+  pushUndo();
+  state.links = state.links.filter(x => x.id !== id);
+  reindex(linksIn(l.folder));
+  commit();
+  toast('Удалено: ' + (l.title || hostOf(l.url)), before);
+}
+function moveLink(id, folder, index){
+  const l = state.links.find(x => x.id === id); if(!l) return false;
+  folder = folder || null;
+  const from = l.folder || null;
+  const sibs = linksIn(folder).filter(x => x.id !== id);
+  const at = index == null ? sibs.length : clamp(index, 0, sibs.length);
+  if(from === folder){
+    const cur = linksIn(folder), next = sibs.slice(); next.splice(at, 0, l);
+    if(cur.length === next.length && cur.every((x,i) => x.id === next[i].id)) return false;
+  }
+  pushUndo();
+  l.folder = folder;
+  sibs.splice(at, 0, l); reindex(sibs);
+  if(from !== folder){ reindex(linksIn(from)); const t = byId(folder); if(t) t.open = true; else ui.rootOpen = true; }
+  commit();
+  return true;
+}
+function moveFolder(id, parent, index){
+  parent = parent || null;
+  if(id === parent || (parent && isAncestor(id, parent))) return false;
+  const f = byId(id); if(!f) return false;
+  const from = f.parent || null;
+  const sibs = kidsOf(parent).filter(x => x.id !== id);
+  const at = index == null ? sibs.length : clamp(index, 0, sibs.length);
+  if(from === parent){
+    const cur = kidsOf(parent), next = sibs.slice(); next.splice(at, 0, f);
+    if(cur.length === next.length && cur.every((x,i) => x.id === next[i].id)) return false;
+  }
+  pushUndo();
+  f.parent = parent;
+  sibs.splice(at, 0, f); reindex(sibs);
+  if(from !== parent){ reindex(kidsOf(from)); const p = byId(parent); if(p) p.open = true; }
+  commit();
+  return true;
+}
+function moveLinkRel(id, folder, targetId, after){
+  const sibs = linksIn(folder).filter(x => x.id !== id);
+  let i = sibs.findIndex(x => x.id === targetId);
+  if(i < 0) i = sibs.length; else if(after) i++;
+  return moveLink(id, folder, i);
+}
+function moveFolderRel(id, parent, targetId, after){
+  const sibs = kidsOf(parent).filter(x => x.id !== id);
+  let i = sibs.findIndex(x => x.id === targetId);
+  if(i < 0) i = sibs.length; else if(after) i++;
+  return moveFolder(id, parent, i);
+}
+function undo(){ if(!undoStack.length) return; redoStack.push(snapshot()); restore(undoStack.pop()); }
+function redo(){ if(!redoStack.length) return; undoStack.push(snapshot()); restore(redoStack.pop()); }
+
+function toast(text, restoreTo){
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.innerHTML = '<span>' + esc(text) + '</span>';
+  if(restoreTo){
+    const b = document.createElement('button');
+    b.textContent = 'Вернуть';
+    b.onclick = () => { restore(restoreTo); el.remove(); };
+    el.appendChild(b);
+  }
+  $('#toasts').appendChild(el);
+  setTimeout(() => el.remove(), restoreTo ? 7000 : 3200);
+}
+function openUrl(url, win){
+  if(win){
+    const w = window.open(url, '_blank', 'popup=yes,width=1280,height=860,noopener');
+    if(w) return;
+    toast('Браузер не дал открыть окно — открываю вкладкой');
+  }
+  const a = document.createElement('a');
+  a.href = url; a.target = '_blank'; a.rel = 'noopener noreferrer';
+  document.body.appendChild(a); a.click(); a.remove();
+}
+async function openAll(list){
+  if(!list.length) return toast('Здесь нет ссылок');
+  if(list.length > 8 && !await ask('Открыть ' + list.length + ' вкладок?',
+      'Столько вкладок откроется сразу — как раз то, от чего картотека спасает.', 'Открыть все')) return;
+  list.forEach((l, i) => setTimeout(() => openUrl(l.url), i * 90));
+  toast('Открываю ' + list.length + ' ' + plural(list.length,'вкладку','вкладки','вкладок'));
+}
+
+/* ─────────────────────── правка на месте ─────────────────────── */
+let editing = null;
+function editInline(el, done){
+  if(editing) return;
+  editing = el;
+  const chip = el.querySelector('.chip-demo'); if(chip) chip.remove();
+  const host = el.closest('a[href]'), href = host && host.getAttribute('href');
+  if(host) host.removeAttribute('href');
+  const original = el.textContent;
+  el.setAttribute('contenteditable','plaintext-only');
+  el.focus();
+  const r = document.createRange(); r.selectNodeContents(el);
+  const s = getSelection(); s.removeAllRanges(); s.addRange(r);
+  const finish = ok => {
+    if(editing !== el) return;
+    editing = null;
+    el.removeAttribute('contenteditable');
+    if(host && href) host.setAttribute('href', href);
+    el.removeEventListener('keydown', onKey);
+    el.removeEventListener('blur', onBlur);
+    const v = el.textContent.trim();
+    if(ok && v && v !== original) done(v); else render();
+    flushHeldRemote();
+  };
+  const onKey = e => {
+    e.stopPropagation();
+    if(e.key === 'Enter'){ e.preventDefault(); finish(true); }
+    else if(e.key === 'Escape'){ e.preventDefault(); finish(false); }
+  };
+  const onBlur = () => finish(true);
+  el.addEventListener('keydown', onKey);
+  el.addEventListener('blur', onBlur);
+}
+
+/* ─────────────────────── меню ─────────────────────── */
+const menuEl = $('#menu');
+function openMenu(x, y, items){
+  menuEl.innerHTML = items.map(it => {
+    if(it === '-') return '<hr>';
+    if(it.swatches) return '<div class="swatches">' + DOT.map((c,i) => '<button style="background:' + c + '" data-i="' + i + '" aria-pressed="' + (it.active === i) + '" aria-label="Цвет ' + (i+1) + '"></button>').join('') + '</div>';
+    return '<button data-k="' + it.k + '"' + (it.danger ? ' class="rm"' : '') + '>' + (it.icon || '') + esc(it.label) + '</button>';
+  }).join('');
+  menuEl.classList.add('on');
+  menuEl.style.left = clamp(x, 8, innerWidth - menuEl.offsetWidth - 8) + 'px';
+  menuEl.style.top = clamp(y, 8, innerHeight - menuEl.offsetHeight - 8) + 'px';
+  menuEl.onclick = e => {
+    const sw = e.target.closest('.swatches button');
+    if(sw){ items.find(i => i.swatches).onColor(+sw.dataset.i); closeMenu(); return; }
+    const b = e.target.closest('button[data-k]'); if(!b) return;
+    closeMenu();
+    const it = items.find(i => i.k === b.dataset.k);
+    if(it && it.run) it.run();
+  };
+}
+const closeMenu = () => menuEl.classList.remove('on');
+addEventListener('pointerdown', e => { if(!e.target.closest('#menu')) closeMenu(); }, true);
+$('#wrap').addEventListener('scroll', closeMenu);
+
+function linkMenu(l, x, y){
+  openMenu(x, y, [
+    { k:'open', label:'Открыть в новой вкладке', icon:ICO.ext, run:()=>openUrl(l.url) },
+    { k:'win', label:'Открыть в новом окне', icon:ICO.ext, run:()=>openUrl(l.url, true) },
+    { k:'copy', label:'Скопировать адрес', icon:ICO.copy, run:()=>{ navigator.clipboard?.writeText(l.url); toast('Адрес скопирован'); } },
+    '-',
+    { k:'edit', label:'Переименовать', icon:ICO.edit, run:()=>{
+        const el = document.querySelector('.card[data-id="' + l.id + '"] [data-title]');
+        if(el) editInline(el, v => { pushUndo(); l.title = v; delete l.demo; commit(); });
+      } },
+    { k:'url', label:'Изменить адрес', icon:ICO.edit, run:()=>editUrlSheet(l) },
+    { k:'move', label:'Переместить в папку…', icon:ICO.folder, run:()=>moveSheet(l) },
+    '-',
+    { k:'rm', label:'Удалить', icon:ICO.rm, danger:true, run:()=>removeLink(l.id) }
+  ]);
+}
+function folderMenu(f, x, y){
+  openMenu(x, y, [
+    { swatches:true, active:f.color, onColor:i => { pushUndo(); f.color = i; commit(); } },
+    { k:'ren', label:'Переименовать', icon:ICO.edit, run:()=>{
+        const el = document.querySelector('.sec[data-fid="' + f.id + '"] [data-name]');
+        if(el) editInline(el, v => renameFolder(f.id, v));
+      } },
+    { k:'add', label:'Добавить ссылку сюда', icon:ICO.plus, run:()=>addSheet('', f.id) },
+    { k:'sub', label:'Вложенная папка', icon:ICO.folder, run:()=>createFolder(f.id) },
+    { k:'openall', label:'Открыть все ссылки', icon:ICO.ext, run:()=>openAll(subtreeLinks(f.id)) },
+    '-',
+    { k:'up', label:'Вынести на уровень выше', icon:ICO.up, run:()=>{
+        if(!f.parent) return toast('Папка и так на верхнем уровне');
+        moveFolder(f.id, (byId(f.parent) || {}).parent || null, null);
+      } },
+    { k:'rm', label:'Удалить папку', icon:ICO.rm, danger:true, run:()=>removeFolder(f.id) }
+  ]);
+}
+
+/* ─────────────────────── листы ─────────────────────── */
+const modal = $('#modal'), sheet = $('#sheet');
+let sheetClose = null;
+function openSheet(html, onOpen){
+  sheet.innerHTML = html;
+  modal.classList.add('on');
+  sheet.querySelectorAll('[data-close]').forEach(b => b.onclick = closeSheet);
+  if(onOpen) onOpen(sheet);
+}
+function closeSheet(){
+  modal.classList.remove('on'); sheet.innerHTML = '';
+  if(sheetClose){ const f = sheetClose; sheetClose = null; f(false); }
+}
+modal.addEventListener('pointerdown', e => { if(e.target === modal) closeSheet(); });
+function ask(title, text, okLabel, danger){
+  return new Promise(res => {
+    sheetClose = res;
+    openSheet('<h2>' + esc(title) + '</h2><p class="hint">' + esc(text) + '</p>' +
+      '<div class="sheet-foot"><button class="btn" data-close>Отмена</button>' +
+      '<button class="btn ' + (danger ? 'btn-danger' : 'btn-ink') + '" data-ok>' + esc(okLabel) + '</button></div>',
+      s => s.querySelector('[data-ok]').onclick = () => {
+        sheetClose = null; modal.classList.remove('on'); sheet.innerHTML = ''; res(true);
+      });
+    requestAnimationFrame(() => sheet.querySelector('[data-ok]')?.focus());
+  });
+}
+function folderOptions(sel, skip){
+  let out = '<option value="">Без папки</option>';
+  const walk = (parent, depth) => {
+    for(const f of kidsOf(parent)){
+      if(skip && (f.id === skip || isAncestor(skip, f.id))) continue;
+      out += '<option value="' + f.id + '"' + (f.id === sel ? ' selected' : '') + '>' +
+        '  '.repeat(depth) + (depth ? '└ ' : '') + esc(f.name) + '</option>';
+      walk(f.id, depth + 1);
+    }
+  };
+  walk(null, 0);
+  return out;
+}
+const URL_RE = /((?:https?:\/\/|ftp:\/\/|file:\/\/)[^\s<>"']+|(?:www\.|[a-z0-9-]+\.)[a-z0-9-]+\.[a-z]{2,}(?:\/[^\s<>"']*)?)/i;
+function parseLinksText(text){
+  const out = [];
+  for(let line of String(text || '').split(/[\r\n]+/)){
+    line = line.trim(); if(!line) continue;
+    const m = line.match(URL_RE); if(!m) continue;
+    const url = urlOf(m[0]); if(!url) continue;
+    const before = line.slice(0, m.index), after = line.slice(m.index + m[0].length);
+    let title;
+    const bar = before.lastIndexOf('|');
+    /* «Заголовок | адрес» — так присылает расширение. Заголовок берём дословно,
+       иначе дефисы внутри названия («Rick Astley - Never Gonna…») превратятся в кашу. */
+    if(bar >= 0 && !before.slice(bar + 1).trim()) title = before.slice(0, bar).trim();
+    else title = (before + ' ' + after).replace(/^[\s|—–•\-\t]+|[\s|—–•\-\t]+$/g,'').trim();
+    out.push({ url, title:title.slice(0,160) });
+  }
+  return out;
+}
+function addSheet(prefill, folderId){
+  openSheet('<h2>Добавить ссылки</h2>' +
+    '<p class="hint">Сколько угодно адресов, по одному в строке. Можно с названием: <span class="mono">Название | адрес</span>.</p>' +
+    '<label class="field"><span>Адреса</span><textarea id="f-urls" spellcheck="false" placeholder="https://example.com&#10;Документация | https://developer.mozilla.org/"></textarea></label>' +
+    '<label class="field"><span>Папка</span><select id="f-folder">' + folderOptions(folderId || lastFolder) + '</select></label>' +
+    '<div class="sheet-foot"><button class="btn" data-close>Отмена</button><button class="btn btn-primary" id="f-ok">Добавить</button></div>',
+    s => {
+      const ta = s.querySelector('#f-urls');
+      if(prefill) ta.value = prefill;
+      requestAnimationFrame(() => { ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); });
+      const go = () => {
+        const items = parseLinksText(ta.value);
+        if(!items.length){ ta.focus(); return toast('Не нашёл ни одного адреса'); }
+        const folder = s.querySelector('#f-folder').value || null;
+        lastFolder = folder;
+        const made = addLinks(items, folder);
+        closeSheet();
+        toast('Добавлено: ' + items.length);
+        finishAdd(made);
+      };
+      s.querySelector('#f-ok').onclick = go;
+      ta.addEventListener('keydown', e => { if((e.metaKey || e.ctrlKey) && e.key === 'Enter') go(); });
+    });
+}
+let lastFolder = null;
+function moveSheet(l){
+  openSheet('<h2>Переместить</h2><p class="hint">' + esc(l.title || hostOf(l.url)) + '</p>' +
+    '<label class="field"><span>Папка</span><select id="m-folder">' + folderOptions(l.folder) + '</select></label>' +
+    '<div class="sheet-foot"><button class="btn" data-close>Отмена</button><button class="btn btn-ink" id="m-ok">Переместить</button></div>',
+    s => s.querySelector('#m-ok').onclick = () => {
+      moveLink(l.id, s.querySelector('#m-folder').value || null, null);
+      closeSheet(); toast('Перемещено');
+    });
+}
+function editUrlSheet(l){
+  openSheet('<h2>Изменить ссылку</h2>' +
+    '<label class="field"><span>Название</span><input id="e-title" value="' + esc(l.title || '') + '"></label>' +
+    '<label class="field"><span>Адрес</span><input id="e-url" class="mono" value="' + esc(l.url) + '" spellcheck="false"></label>' +
+    '<div class="sheet-foot"><button class="btn" data-close>Отмена</button><button class="btn btn-ink" id="e-ok">Сохранить</button></div>',
+    s => {
+      s.querySelector('#e-ok').onclick = () => {
+        const u = urlOf(s.querySelector('#e-url').value);
+        if(!u) return toast('Адрес непонятен');
+        pushUndo();
+        l.url = u; l.title = s.querySelector('#e-title').value.trim() || titleFromUrl(u); delete l.demo;
+        commit(); closeSheet();
+      };
+      requestAnimationFrame(() => s.querySelector('#e-title').focus());
+    });
+}
+function helpSheet(){
+  openSheet('<h2>Как складывать сюда вкладки</h2>' +
+    '<p class="hint">Chrome не отдаёт страницам вкладку из полосы вкладок — она отрывается в новое окно мимо сайта. Остальное работает:</p>' +
+    '<ul><li><b>Перетащите значок слева от адреса</b> в адресной строке — прямо на нужную папку. Так приезжает <b>настоящий заголовок страницы</b>, это самый надёжный способ.</li>' +
+    '<li><b>Скопируйте ссылку на странице</b> (правый клик по ней или выделение с текстом) и нажмите <b>⌘V</b> — вместе со ссылкой приедет её текст.</li>' +
+    '<li><b>⌘V</b> с голым адресом тоже работает: название соберётся из самого адреса.</li>' +
+    '<li>Кнопка <b>«Ссылка»</b> принимает целый список, по одному адресу в строке.</li></ul>' +
+    '<p class="hint"><b>Данные лежат в этом браузере</b> и никуда не уходят: сервера у Картотеки нет. ' +
+    'Поэтому между устройствами они не ездят — переносите выгрузкой в JSON из меню <kbd class="mono">⋯</kbd>.</p>' +
+    '<p class="hint" style="margin-bottom:6px"><b>Расширение Chrome</b></p>' +
+    '<p class="hint">Если поставлено расширение «Картотека — сдать вкладки»: <kbd class="mono">⌘⇧K</kbd> покажет список вкладок окна, ' +
+    '<kbd class="mono">⌘⇧S</kbd> сдаёт текущую, а поле в попапе узнаёт название по любому адресу. Вкладки закрываются, ' +
+    'ссылки ложатся в буфер <b>с настоящими заголовками</b> — остаётся нажать <kbd class="mono">⌘V</kbd> здесь. ' +
+    'Для сайтов без oEmbed это самый верный способ.</p>' +
+    '<p class="hint" style="margin-bottom:6px"><b>Откуда берётся название</b></p>' +
+    '<p class="hint">У YouTube, Vimeo, SoundCloud, Flickr и TED название подтягивается из сети само — эти сервисы отдают его всем желающим. ' +
+    'Остальные сайты браузеру читать не дают (запрещает CORS), и для них название берётся из перетаскивания, из буфера ' +
+    'или собирается из самого адреса: ' +
+    '<span class="mono">/kak-my-delali-sajt/</span> станет «Как мы делали сайт», <span class="mono">github.com/vzavalko/mind-viewer</span> — «vzavalko/mind-viewer». ' +
+    'Когда из адреса ничего не вытащить, карточка добавится и сразу встанет на переименование: название выделено, достаточно начать печатать.</p>' +
+    '<p class="hint" style="margin-bottom:6px"><b>Внутри картотеки</b></p>' +
+    '<ul><li>Клик по заголовку папки — свернуть или раскрыть. Двойной клик по названию — переименовать.</li>' +
+    '<li>Карточки и папки <b>таскаются</b>: на заголовок папки — внутрь, между карточками — поменять порядок. Если тащить над свёрнутой папкой, она сама раскроется.</li>' +
+    '<li>Папку на верхний или нижний край другой папки — встать рядом с ней.</li></ul>' +
+    '<div class="mono" style="font-size:12px;line-height:1.9;color:var(--text-2)">' +
+    '/ — поиск · N — добавить · F — новая папка<br>E — свернуть или раскрыть всё · ⌘V — вставить · ⌘Z — отменить</div>' +
+    '<div class="sheet-foot"><button class="btn btn-ink" data-close>Понятно</button></div>');
+}
+function exportJson(){
+  const data = JSON.stringify({ app:'kartoteka', v:1, exported:new Date().toISOString(), folders:state.folders, links:state.links }, null, 2);
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([data], { type:'application/json' }));
+  a.download = 'kartoteka-' + new Date().toISOString().slice(0,10) + '.json';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  toast('Файл выгружен');
+}
+function importJson(file){
+  const r = new FileReader();
+  r.onload = () => {
+    try{
+      const d = JSON.parse(r.result);
+      if(!Array.isArray(d.links)) throw 0;
+      pushUndo();
+      const map = new Map();
+      (d.folders || []).forEach(f => {
+        const nf = { id:uid(), name:f.name || 'Папка', parent:null, order:state.folders.length, color:f.color || 0, open:true };
+        map.set(f.id, nf.id); state.folders.push(nf);
+      });
+      (d.folders || []).forEach(f => { const nf = byId(map.get(f.id)); if(nf && f.parent) nf.parent = map.get(f.parent) || null; });
+      d.links.forEach(l => {
+        const u = urlOf(l.url); if(!u) return;
+        state.links.push({ id:uid(), folder:map.get(l.folder) || null, url:u, title:l.title || titleFromUrl(u), order:state.links.length, added:l.added || Date.now() });
+      });
+      commit();
+      toast('Загружено: ' + d.links.length + ' ' + plural(d.links.length,'ссылка','ссылки','ссылок'));
+    }catch(e){ toast('Файл не похож на выгрузку картотеки'); }
+  };
+  r.readAsText(file);
+}
+function clearDemo(){
+  const ids = new Set(state.links.filter(l => l.demo).map(l => l.id));
+  if(!ids.size) return toast('Примеров уже нет');
+  const before = snapshot();
+  pushUndo();
+  state.links = state.links.filter(l => !ids.has(l.id));
+  const empties = state.folders.filter(f => countDeep(f.id) === 0).map(f => f.id);
+  state.folders = state.folders.filter(f => !empties.includes(f.id));
+  state.folders.forEach(f => { if(f.parent && empties.includes(f.parent)) f.parent = null; });
+  commit();
+  toast('Примеры убраны', before);
+}
+
+/* ─────────────────────── клики ─────────────────────── */
+function setView(v){
+  ui.view = v;
+  $('#vGrid').setAttribute('aria-pressed', String(v === 'grid'));
+  $('#vList').setAttribute('aria-pressed', String(v === 'list'));
+  render();
+}
+$('#vGrid').onclick = () => setView('grid');
+$('#vList').onclick = () => setView('list');
+$('#addBtn').onclick = () => addSheet();
+$('#foldBtn').onclick = foldAll;
+$('#importFile').onchange = e => { const f = e.target.files[0]; if(f) importJson(f); e.target.value = ''; };
+$('#moreBtn').onclick = e => {
+  const r = e.currentTarget.getBoundingClientRect();
+  openMenu(r.right - 210, r.bottom + 8, [
+    { k:'help', label:'Как складывать вкладки', icon:ICO.ext, run:helpSheet },
+    { k:'fold', label:'Свернуть или раскрыть всё', icon:ICO.folder, run:foldAll },
+    '-',
+    { k:'exp', label:'Выгрузить в JSON', icon:ICO.copy, run:exportJson },
+    { k:'imp', label:'Загрузить из JSON', icon:ICO.folder, run:()=>$('#importFile').click() },
+    '-',
+    { k:'icons', label:iconMode ? 'Выключить значки сайтов' : 'Включить значки сайтов', icon:ICO.copy,
+      run:()=>{ iconMode = !iconMode; lsWrite('kartoteka.icons', iconMode); render(); } },
+    { k:'demo', label:'Убрать примеры', icon:ICO.rm, run:clearDemo }
+  ]);
+};
+$('#q').addEventListener('input', e => { ui.q = e.target.value.trim(); renderCol(); });
+$('#q').addEventListener('keydown', e => {
+  e.stopPropagation();
+  if(e.key === 'Escape'){ e.target.value = ''; ui.q = ''; e.target.blur(); renderCol(); }
+});
+
+$('#col').addEventListener('click', e => {
+  if(justDragged()){ e.preventDefault(); return; }
+  const act = e.target.closest('[data-act]');
+  if(act){
+    const k = act.dataset.act;
+    const head = act.closest('.sec-head');
+    const cardEl = act.closest('.card');
+    if(k === 'new-folder') return createFolder(null);
+    if(k === 'clear-demo') return clearDemo();
+    if(head){
+      const fid = head.dataset.fid || null;
+      if(k === 'add-here') return addSheet('', fid);
+      if(k === 'open-all') return openAll(fid ? subtreeLinks(fid) : linksIn(null));
+      if(k === 'menu'){ const f = byId(fid); if(f){ const r = act.getBoundingClientRect(); folderMenu(f, r.right - 210, r.bottom + 6); } return; }
+    }
+    if(cardEl){
+      e.preventDefault();
+      const l = state.links.find(x => x.id === cardEl.dataset.id); if(!l) return;
+      if(k === 'rm') return removeLink(l.id);
+      if(k === 'edit') return editInline(cardEl.querySelector('[data-title]'), v => { pushUndo(); l.title = v; delete l.demo; commit(); });
+      if(k === 'menu'){ const r = act.getBoundingClientRect(); return linkMenu(l, r.right - 210, r.bottom + 6); }
+    }
+    return;
+  }
+  const head = e.target.closest('.sec-head');
+  if(head && !e.target.closest('[contenteditable]')) toggleFolder(head.dataset.fid || null);
+});
+$('#col').addEventListener('dblclick', e => {
+  const n = e.target.closest('.sec-head [data-name]');
+  if(n){ e.stopPropagation(); const id = n.closest('.sec-head').dataset.fid; editInline(n, v => renameFolder(id, v)); }
+});
+$('#col').addEventListener('contextmenu', e => {
+  const head = e.target.closest('.sec-head');
+  if(head && head.dataset.fid){ e.preventDefault(); const f = byId(head.dataset.fid); if(f) folderMenu(f, e.clientX, e.clientY); return; }
+  const cardEl = e.target.closest('.card');
+  if(cardEl){ e.preventDefault(); const l = state.links.find(x => x.id === cardEl.dataset.id); if(l) linkMenu(l, e.clientX, e.clientY); }
+});
+
+/* ─────────────────────── перетаскивание ─────────────────────── */
+let dnd = null, dragEndAt = 0, hoverFid, hoverTimer = null;
+const justDragged = () => Date.now() - dragEndAt < 160;
+function clearMarks(){
+  document.querySelectorAll('.drop-before,.drop-after,.drop-in,.drop-end')
+    .forEach(el => el.classList.remove('drop-before','drop-after','drop-in','drop-end'));
+}
+function reapplyLift(){
+  if(!dnd || !dnd.armed) return;
+  const el = dnd.kind === 'link'
+    ? document.querySelector('.card[data-id="' + dnd.id + '"]')
+    : document.querySelector('.sec[data-fid="' + dnd.id + '"] > .sec-head');
+  if(el){ dnd.el = el; el.classList.add('lifted'); }
+}
+document.addEventListener('pointerdown', e => {
+  if(e.button > 0 || editing || modal.classList.contains('on')) return;
+  const cardEl = e.target.closest('.card');
+  const head = e.target.closest('.sec-head');
+  const src = cardEl || (head && head.dataset.fid ? head : null);
+  if(!src || e.target.closest('button,[contenteditable]')) return;
+  dnd = { kind:cardEl ? 'link' : 'folder', id:cardEl ? cardEl.dataset.id : head.dataset.fid, el:src,
+          x:e.clientX, y:e.clientY, pid:e.pointerId, armed:false, touch:e.pointerType === 'touch', drop:null, hold:null };
+  if(dnd.touch) dnd.hold = setTimeout(() => { if(dnd && !dnd.armed) arm(); }, 320);
+  window.addEventListener('pointermove', onMove, { passive:false });
+  window.addEventListener('pointerup', onUp);
+  window.addEventListener('pointercancel', endDrag);
+});
+function arm(){
+  dnd.armed = true;
+  const r = dnd.el.getBoundingClientRect();
+  const g = dnd.el.cloneNode(true);
+  g.className = (dnd.kind === 'link' ? 'card ghost' : 'sec-head ghost g-head') +
+                (ui.view === 'list' && dnd.kind === 'link' ? ' g-list' : '');
+  g.style.width = r.width + 'px';
+  dnd.dx = dnd.x - r.left; dnd.dy = dnd.y - r.top;
+  g.style.left = r.left + 'px'; g.style.top = r.top + 'px';
+  document.body.appendChild(g);
+  dnd.ghost = g;
+  dnd.el.classList.add('lifted');
+  document.body.classList.add('dragging');
+}
+function onMove(e){
+  if(!dnd || e.pointerId !== dnd.pid) return;
+  if(!dnd.armed){
+    const far = Math.hypot(e.clientX - dnd.x, e.clientY - dnd.y);
+    if(dnd.touch){ if(far > 10){ clearTimeout(dnd.hold); endDrag(); } return; }
+    if(far < 5) return;
+    arm();
+  }
+  e.preventDefault();
+  dnd.ghost.style.left = (e.clientX - dnd.dx) + 'px';
+  dnd.ghost.style.top = (e.clientY - dnd.dy) + 'px';
+  hitTest(e.clientX, e.clientY);
+  edgeScroll(e.clientY);
+}
+document.addEventListener('touchmove', e => { if(dnd && dnd.armed) e.preventDefault(); }, { passive:false });
+
+/* свёрнутая папка раскрывается сама, если подержать над ней */
+function hoverOpen(fid){
+  if(fid === hoverFid) return;
+  hoverFid = fid; clearTimeout(hoverTimer);
+  if(fid === undefined) return;
+  const closed = fid ? (byId(fid) && !isOpen(byId(fid))) : ui.rootOpen === false;
+  if(!closed) return;
+  hoverTimer = setTimeout(() => {
+    if(!dnd || !dnd.armed) return;
+    if(fid){ const f = byId(fid); if(f) f.open = true; } else ui.rootOpen = true;
+    lsWrite(LS, state); render();
+  }, 600);
+}
+function hitTest(x, y){
+  clearMarks();
+  dnd.drop = null;
+  dnd.ghost.style.display = 'none';
+  const el = document.elementFromPoint(x, y);
+  dnd.ghost.style.display = '';
+  if(!el){ hoverOpen(undefined); return; }
+
+  const head = el.closest('.sec-head');
+  if(head){
+    const fid = head.dataset.fid || null;
+    hoverOpen(fid);
+    if(dnd.kind === 'folder'){
+      if(fid === dnd.id || (fid && isAncestor(dnd.id, fid))) return;
+      if(fid){
+        const r = head.getBoundingClientRect(), p = (y - r.top) / r.height;
+        if(p < 0.26){ head.classList.add('drop-before'); dnd.drop = { type:'fbefore', id:fid }; return; }
+        if(p > 0.74){ head.classList.add('drop-after'); dnd.drop = { type:'fafter', id:fid }; return; }
+      }
+    }
+    if(dnd.kind === 'folder' && !fid){ head.classList.add('drop-in'); dnd.drop = { type:'into', id:null }; return; }
+    head.classList.add('drop-in'); dnd.drop = { type:'into', id:fid };
+    return;
+  }
+  hoverOpen(undefined);
+  if(dnd.kind !== 'link'){
+    const sec = el.closest('.sec');
+    const fid = sec ? (sec.dataset.fid || null) : null;
+    if(fid === dnd.id || (fid && isAncestor(dnd.id, fid))) return;
+    dnd.drop = { type:'into', id:fid };
+    if(!fid) markRoot();
+    return;
+  }
+  const cardEl = el.closest('.card');
+  if(cardEl && cardEl.dataset.id !== dnd.id){
+    const r = cardEl.getBoundingClientRect();
+    const after = ui.view === 'list' ? y > r.top + r.height/2 : x > r.left + r.width/2;
+    cardEl.classList.add(after ? 'drop-after' : 'drop-before');
+    dnd.drop = { type: after ? 'after' : 'before', id:cardEl.dataset.id };
+    return;
+  }
+  const box = el.closest('.links');
+  if(box && !ui.q){ box.classList.add('drop-end'); dnd.drop = { type:'end', id:box.dataset.fid || null }; return; }
+  const sec = el.closest('.sec');
+  if(!ui.q){
+    dnd.drop = { type:'end', id:sec ? (sec.dataset.fid || null) : null };
+    if(!sec) markRoot();
+  }
+}
+function markRoot(){ const b = document.querySelector('.newf'); if(b) b.classList.add('drop-end'); }
+function edgeScroll(y){
+  const w = $('#wrap'), r = w.getBoundingClientRect();
+  if(y < r.top + 64) w.scrollTop -= 16;
+  else if(y > r.bottom - 64) w.scrollTop += 16;
+}
+function onUp(e){
+  if(!dnd || e.pointerId !== dnd.pid) return;
+  const d = dnd;
+  if(d.armed){ dragEndAt = Date.now(); applyDrop(d); }
+  endDrag();
+}
+function applyDrop(d){
+  const t = d.drop; if(!t) return;
+  if(d.kind === 'folder'){
+    if(t.type === 'into') moveFolder(d.id, t.id, null);
+    else{ const tf = byId(t.id); if(tf) moveFolderRel(d.id, tf.parent || null, t.id, t.type === 'fafter'); }
+    return;
+  }
+  if(t.type === 'into' || t.type === 'end') moveLink(d.id, t.id, null);
+  else{
+    const tl = state.links.find(x => x.id === t.id);
+    if(tl) moveLinkRel(d.id, tl.folder || null, t.id, t.type === 'after');
+  }
+}
+function endDrag(){
+  if(!dnd) return;
+  clearTimeout(dnd.hold); clearTimeout(hoverTimer); hoverFid = undefined;
+  if(dnd.ghost) dnd.ghost.remove();
+  if(dnd.el) dnd.el.classList.remove('lifted');
+  document.body.classList.remove('dragging');
+  clearMarks();
+  dnd = null;
+  document.querySelectorAll('.lifted').forEach(el => el.classList.remove('lifted'));
+  window.removeEventListener('pointermove', onMove);
+  window.removeEventListener('pointerup', onUp);
+  window.removeEventListener('pointercancel', endDrag);
+  flushHeldRemote();
+}
+
+/* ─────────────────────── приём ссылок из браузера ─────────────────────── */
+let veilN = 0;
+function targetFid(el){
+  if(!el || !el.closest) return null;
+  const head = el.closest('.sec-head'), box = el.closest('.links'), sec = el.closest('.sec');
+  const node = head || box || sec;
+  return node ? (node.dataset.fid || null) : null;
+}
+function veilFor(el){
+  const fid = targetFid(el);
+  const name = fid ? (byId(fid) || {}).name : 'Без папки';
+  $('#veilSub').textContent = 'Ляжет в «' + (name || 'Без папки') + '»';
+  $('#veil').classList.add('on');
+}
+document.addEventListener('dragenter', e => { if(dnd) return; veilN++; veilFor(e.target); });
+document.addEventListener('dragleave', () => { if(dnd) return; if(--veilN <= 0){ veilN = 0; $('#veil').classList.remove('on'); } });
+document.addEventListener('dragover', e => {
+  if(dnd) return;
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'copy';
+  clearMarks();
+  const head = e.target.closest && e.target.closest('.sec-head');
+  if(head) head.classList.add('drop-in');
+  veilFor(e.target);
+});
+document.addEventListener('drop', e => {
+  e.preventDefault();
+  veilN = 0; $('#veil').classList.remove('on');
+  const fid = targetFid(e.target);
+  clearMarks();
+  if(dnd) return;
+  const items = extractFromDT(e.dataTransfer);
+  if(!items.length) return toast('В этом перетаскивании не нашлось адреса');
+  const made = addLinks(items, fid);
+  toast('Сохранено: ' + items.length + ' ' + plural(items.length,'ссылка','ссылки','ссылок'));
+  finishAdd(made);
+});
+function extractFromDT(dt){
+  if(!dt) return [];
+  const out = [];
+  let uri = '', html = '', text = '';
+  try{ uri = dt.getData('text/uri-list') || ''; }catch(e){}
+  try{ html = dt.getData('text/html') || ''; }catch(e){}
+  try{ text = dt.getData('text/plain') || ''; }catch(e){}
+  let title = '';
+  if(html){
+    try{
+      const d = new DOMParser().parseFromString(html, 'text/html');
+      const a = d.querySelector('a');
+      if(a) title = (a.textContent || '').replace(/\s+/g,' ').trim();
+      if(!title){ const img = d.querySelector('img'); if(img) title = (img.alt || '').trim(); }
+    }catch(e){}
+  }
+  const lines = uri.split(/[\r\n]+/).map(s => s.trim()).filter(s => s && s[0] !== '#');
+  if(lines.length) lines.forEach((u, i) => { const url = urlOf(u); if(url) out.push({ url, title: i === 0 ? title : '' }); });
+  else if(text){
+    out.push(...parseLinksText(text));
+    if(out.length === 1 && title && !out[0].title) out[0].title = title;
+  }
+  return out;
+}
+
+/* ─────────────────────── буфер и клавиатура ─────────────────────── */
+/* Если ссылку копировали прямо со страницы, буфер несёт ещё и HTML —
+   оттуда берём настоящий текст ссылки, он лучше любого разбора адреса. */
+function fromClipboard(text, html){
+  const items = parseLinksText(text);
+  if(!html) return items;
+  try{
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    const names = new Map();
+    doc.querySelectorAll('a[href]').forEach(a => {
+      const u = urlOf(a.getAttribute('href'));
+      const t = (a.textContent || '').replace(/\s+/g,' ').trim();
+      if(u && t && t.length < 160 && !names.has(u)) names.set(u, t);
+    });
+    if(!names.size) return items;
+    if(!items.length){ for(const [u,t] of names) items.push({ url:u, title:t }); return items; }
+    return items.map(it => it.title || !names.get(it.url) ? it : { url:it.url, title:names.get(it.url) });
+  }catch(e){ return items; }
+}
+document.addEventListener('paste', e => {
+  if(editing || modal.classList.contains('on')) return;
+  const t = e.target;
+  if(t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+  const dt = e.clipboardData || window.clipboardData;
+  let text = '', html = '';
+  try{ text = dt.getData('text') || ''; }catch(err){}
+  try{ html = dt.getData('text/html') || ''; }catch(err){}
+  const items = fromClipboard(text, html);
+  if(!items.length) return;
+  e.preventDefault();
+  if(items.length > 1) return addSheet(text.trim());
+  const made = addLinks(items, lastFolder);
+  const l = state.links.find(x => x.id === made[0].id);
+  toast('Сохранено: ' + (l ? l.title : hostOf(items[0].url)));
+  finishAdd(made);
+});
+addEventListener('keydown', e => {
+  if(editing) return;
+  const open = modal.classList.contains('on');
+  if(e.key === 'Escape'){
+    if(open) return closeSheet();
+    if(menuEl.classList.contains('on')) return closeMenu();
+    if(dnd) return endDrag();
+    if(ui.q){ ui.q = ''; $('#q').value = ''; renderCol(); }
+    return;
+  }
+  if(open) return;
+  const t = e.target;
+  const typing = t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable);
+  if((e.metaKey || e.ctrlKey) && /^[zZяЯ]$/.test(e.key)){ e.preventDefault(); e.shiftKey ? redo() : undo(); return; }
+  if(typing || e.metaKey || e.ctrlKey || e.altKey) return;
+  if(e.key === '/'){ e.preventDefault(); $('#q').focus(); $('#q').select(); }
+  else if(/^[nNтТ]$/.test(e.key)){ e.preventDefault(); addSheet(); }
+  else if(/^[fFаА]$/.test(e.key)){ e.preventDefault(); createFolder(null); }
+  else if(/^[eEуУ]$/.test(e.key)){ e.preventDefault(); foldAll(); }
+});
+
+initStore();
+})();
+</script>
+
+<style>
+.sec-head.lifted{opacity:.28}
+</style>
+<style>
+.newf.drop-end{color:var(--accent);border-color:var(--accent);border-style:solid;background:var(--accent-soft)}
+</style>
+</body>
+</html>
