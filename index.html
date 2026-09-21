@@ -589,7 +589,11 @@ function restore(json){ state = JSON.parse(json); commit(); }
 function flushHeldRemote(){}
 
 const SYNC_TXT = { ok:'Сохранено в этом браузере', busy:'Сохраняю…', err:'Не удалось сохранить — возможно, кончилось место' };
-function setSync(st){ const d = $('#sync'); d.dataset.state = st; d.title = SYNC_TXT[st] || ''; }
+function setSync(st){
+  const d = $('#sync');
+  d.dataset.state = st;
+  d.title = (SYNC_TXT[st] || '') + (bridge ? ' · расширение подключено' : '');
+}
 
 function initStore(){
   iconMode = lsRead('kartoteka.icons', true) !== false;
@@ -756,12 +760,67 @@ async function enrichOne(id){
   lsWrite(LS, state); render();
   return true;
 }
+/* ── мост с расширением ──
+   Ради этого и был переезд на свой домен: к странице артефакта на служебном
+   домене расширение подключиться не могло. Теперь оно здоровается само и
+   умеет узнать название для любого сайта — браузеру это запрещает CORS. */
+let bridge = false, bridgeSeq = 0;
+const bridgeWaits = new Map();
+
+addEventListener('message', e => {
+  if(e.source !== window || !e.data || typeof e.data !== 'object') return;
+  const d = e.data;
+  if(d.kartoteka === 'hello'){ bridge = true; setSync('ok'); return; }
+  if(d.kartoteka === 'resolved'){
+    const fn = bridgeWaits.get(d.id);
+    if(fn){ bridgeWaits.delete(d.id); fn(Array.isArray(d.items) ? d.items : []); }
+    return;
+  }
+  if(d.kartoteka === 'push' && Array.isArray(d.items)){
+    const items = d.items
+      .map(x => ({ url: urlOf(x && x.url), title: (x && x.title) || '' }))
+      .filter(x => x.url);
+    if(!items.length) return;
+    const made = addLinks(items, lastFolder);
+    toast('Из браузера: ' + items.length + ' ' + plural(items.length,'ссылка','ссылки','ссылок'));
+    finishAdd(made);
+  }
+});
+function askBridge(urls){
+  if(!bridge || !urls.length) return Promise.resolve([]);
+  const id = ++bridgeSeq;
+  return new Promise(res => {
+    bridgeWaits.set(id, res);
+    postMessage({ kartoteka:'resolve', id, urls }, location.origin);
+    setTimeout(() => { if(bridgeWaits.delete(id)) res([]); }, 20000);
+  });
+}
+
 async function finishAdd(made){
   if(!made.length) return;
-  if(made.length > 1){ for(const m of made) if(m.oembed) await enrichOne(m.id); return; }
-  const m = made[0];
-  if(m.oembed && await enrichOne(m.id)) return;
-  if(m.weak) nameIfWeak([m]);
+  for(const m of made) if(m.oembed) await enrichOne(m.id);
+
+  /* Сайты без oEmbed умеет только расширение. */
+  const rest = made.filter(m => m.needTitle && !m.oembed)
+    .map(m => ({ m, l: state.links.find(x => x.id === m.id) }))
+    .filter(x => x.l);
+  if(rest.length && bridge){
+    const got = await askBridge(rest.map(x => x.l.url));
+    const byUrl = new Map(got.filter(g => g && g.title).map(g => [g.url, g.title]));
+    let changed = false;
+    for(const { l } of rest){
+      const t = byUrl.get(l.url);
+      const still = state.links.find(x => x.id === l.id);
+      if(t && still && still.title !== t){ still.title = t; delete still.demo; changed = true; }
+    }
+    if(changed && !editing){ lsWrite(LS, state); render(); }
+  }
+
+  /* Если название так и осталось собранным из адреса — предложим вписать. */
+  if(made.length === 1 && made[0].weak){
+    const l = state.links.find(x => x.id === made[0].id);
+    if(l && l.title === deriveTitle(l.url).title) nameIfWeak([made[0]]);
+  }
 }
 
 /* ─────────────────────── действия ─────────────────────── */
@@ -776,7 +835,7 @@ function addLinks(items, folder){
     const d = deriveTitle(it.url);
     const l = { id:uid(), folder:folder || null, url:it.url, title:it.title || d.title, order:order++, added:Date.now() };
     state.links.push(l);
-    made.push({ id:l.id, weak:!it.title && d.weak, oembed:!it.title && !!oembedFor(it.url) });
+    made.push({ id:l.id, weak:!it.title && d.weak, needTitle:!it.title, oembed:!it.title && !!oembedFor(it.url) });
   }
   if(folder){ const f = byId(folder); if(f) f.open = true; }
   else ui.rootOpen = true;
@@ -1131,6 +1190,7 @@ function editUrlSheet(l){
 }
 function helpSheet(){
   openSheet('<h2>Как складывать сюда вкладки</h2>' +
+    (bridge ? '<p class="hint" style="color:var(--accent)"><b>Расширение подключено.</b> Названия узнаются для любого сайта, вкладки приезжают сюда сами.</p>' : '') +
     '<p class="hint">Chrome не отдаёт страницам вкладку из полосы вкладок — она отрывается в новое окно мимо сайта. Остальное работает:</p>' +
     '<ul><li><b>Перетащите значок слева от адреса</b> в адресной строке — прямо на нужную папку. Так приезжает <b>настоящий заголовок страницы</b>, это самый надёжный способ.</li>' +
     '<li><b>Скопируйте ссылку на странице</b> (правый клик по ней или выделение с текстом) и нажмите <b>⌘V</b> — вместе со ссылкой приедет её текст.</li>' +
