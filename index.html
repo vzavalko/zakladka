@@ -94,16 +94,20 @@ body.dragging,body.dragging *{cursor:grabbing!important;user-select:none}
 }
 @media (max-width:700px){ .brand b{display:none} }
 
-.search{position:relative;display:flex;align-items:center;flex:1 1 200px;max-width:340px;min-width:0}
+.search{
+  position:relative;display:flex;align-items:center;min-width:0;flex:0 0 auto;width:204px;
+  transition:width .24s cubic-bezier(.2,.8,.3,1);
+}
+/* при наборе поле плавно разворачивается обратно на те же 40% */
+.search:focus-within,.search.filled{width:340px}
 .search svg{position:absolute;left:11px;width:14px;height:14px;color:var(--muted);pointer-events:none}
 .search input{
   width:100%;background:var(--surf);border:1px solid transparent;border-radius:999px;
-  padding:7px 28px 7px 31px;font-size:13px;-webkit-appearance:none;
+  padding:7px 14px 7px 31px;font-size:13px;-webkit-appearance:none;
 }
 .search input::placeholder{color:var(--muted)}
 .search input:focus{outline:none;border-color:var(--accent-line);background:var(--paper)}
-.search kbd{position:absolute;right:11px;font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;pointer-events:none}
-.search input:focus~kbd,.search input:not(:placeholder-shown)~kbd{display:none}
+@media (max-width:620px){ .search,.search:focus-within,.search.filled{flex:1 1 140px;width:auto} }
 
 .bar-right{display:flex;align-items:center;gap:7px;margin-left:auto;flex:none}
 .btn{
@@ -174,6 +178,10 @@ body.dragging,body.dragging *{cursor:grabbing!important;user-select:none}
   background:var(--surf);border-radius:999px;padding:3px 9px;flex:none;line-height:1.4;
 }
 .sec-head:hover .pill{background:var(--surf-2)}
+/* папка, в которую попадёт вставленное */
+.sec-head.is-target .pill{
+  background:var(--accent-soft);color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent-line);
+}
 .sec-acts{display:flex;align-items:center;gap:2px;margin-left:auto;flex:none;opacity:0;transition:opacity .12s}
 .sec-head:hover .sec-acts,.sec-head:focus-within .sec-acts{opacity:1}
 .sec-acts button{width:27px;height:27px;border-radius:999px;display:grid;place-items:center;color:var(--muted)}
@@ -212,10 +220,17 @@ body.dragging,body.dragging *{cursor:grabbing!important;user-select:none}
   text-transform:uppercase;line-height:1;
 }
 .fav img{
-  position:absolute;inset:0;width:100%;height:100%;object-fit:contain;
-  padding:5px;background:#fff;border-radius:inherit;
+  position:absolute;inset:0;width:100%;height:100%;object-fit:contain;padding:5px;
 }
 .links.list .fav img{padding:3px}
+/* Значок загрузился — плитка становится ровной белой с тонкой серой обводкой.
+   Цветная подложка под буквой иначе проступала по скруглениям рваной каймой
+   разного цвета. !important перебивает цвет, заданный в разметке. */
+.fav.has-icon{
+  background:#FFFFFF!important;
+  box-shadow:inset 0 0 0 1px rgba(15,15,15,.07);
+  color:transparent;
+}
 .card-txt{min-width:0;flex:1}
 .card-title{
   font-size:13.5px;font-weight:500;line-height:1.35;letter-spacing:-.006em;
@@ -341,8 +356,7 @@ body.dragging,body.dragging *{cursor:grabbing!important;user-select:none}
     </div>
     <label class="search">
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5 14 14" stroke-linecap="round"/></svg>
-      <input id="q" type="search" placeholder="Поиск по всем папкам" autocomplete="off" spellcheck="false">
-      <kbd>/</kbd>
+      <input id="q" type="search" placeholder="Быстрый поиск" autocomplete="off" spellcheck="false">
     </label>
     <div class="bar-right">
       <div class="seg" role="group" aria-label="Вид">
@@ -537,7 +551,7 @@ function plural(n,a,b,c){
 /* ─────────────────────── состояние ─────────────────────── */
 const LS = 'kartoteka.v1', LS_UI = 'kartoteka.ui';
 let state = { v:1, folders:[], links:[] };
-let ui = { view:'grid', q:'' };
+let ui = { view:'grid', q:'', at:null };
 let iconMode = true;
 const undoStack = [], redoStack = [];
 const lsRead = (k, fb) => { try{ const s = localStorage.getItem(k); return s ? JSON.parse(s) : fb; }catch(e){ return fb; } };
@@ -618,7 +632,7 @@ const ICO = {
 };
 
 /* ─────────────────────── отрисовка ─────────────────────── */
-function render(){ renderCol(); reapplyLift(); lsWrite(LS_UI, { view:ui.view, rootOpen:ui.rootOpen }); }
+function render(){ renderCol(); reapplyLift(); lsWrite(LS_UI, { view:ui.view, rootOpen:ui.rootOpen, at:ui.at }); }
 
 const searchHits = () => {
   const q = ui.q.toLowerCase();
@@ -628,6 +642,7 @@ const hasMatch = (fid, m) => subtreeIds(fid).some(id => state.links.some(l => l.
 
 function renderCol(){
   const col = $('#col');
+  if(ui.at && !byId(ui.at)) ui.at = null;   /* папку могли удалить */
   if(!state.folders.length && !state.links.length){ col.innerHTML = emptyAll(); return; }
 
   const m = ui.q ? new Set(searchHits().map(l => l.id)) : null;
@@ -645,9 +660,12 @@ function renderCol(){
   col.innerHTML = h;
 }
 
+const folderLabel = id => id ? ((byId(id) || {}).name || 'папка') : 'Без папки';
 function secHead(fid, name, dot, count, opts){
   const o = opts || {};
-  return '<div class="sec-head" data-fid="' + fid + '">' +
+  const target = (fid || null) === (ui.at || null);
+  return '<div class="sec-head' + (target ? ' is-target' : '') + '" data-fid="' + fid + '"' +
+      (target ? ' title="Вставленные ссылки попадут сюда"' : '') + '>' +
     '<i class="tw">' + ICO.caret + '</i>' +
     '<i class="sec-dot" style="background:' + dot + '"></i>' +
     '<span class="sec-name"' + (o.nameEditable ? ' data-name' : '') + '>' + esc(name) + '</span>' +
@@ -707,8 +725,9 @@ function favImg(url){
   if(!host) return '';
   const own = 'https://' + host + '/favicon.ico';
   return '<img loading="lazy" alt="" src="https://icons.duckduckgo.com/ip3/' + encodeURIComponent(host) + '.ico"' +
-         ' onerror="this.onerror=null;this.src=&quot;' + own + '&quot;;this.dataset.fallback=1;' +
-         'this.addEventListener(&apos;error&apos;,()=>this.remove())">';
+         ' onload="this.parentNode.classList.add(&apos;has-icon&apos;)"' +
+         ' onerror="this.onerror=null;this.src=&quot;' + own + '&quot;;' +
+         'this.addEventListener(&apos;error&apos;,()=>{this.parentNode.classList.remove(&apos;has-icon&apos;);this.remove()})">';
 }
 function emptyAll(){
   return '<div class="empty">' +
@@ -781,8 +800,9 @@ addEventListener('message', e => {
       .map(x => ({ url: urlOf(x && x.url), title: (x && x.title) || '' }))
       .filter(x => x.url);
     if(!items.length) return;
-    const made = addLinks(items, lastFolder);
-    toast('Из браузера: ' + items.length + ' ' + plural(items.length,'ссылка','ссылки','ссылок'));
+    const where = folderLabel(ui.at);
+    const made = addLinks(items, ui.at);
+    toast('Из браузера: ' + items.length + ' ' + plural(items.length,'ссылка','ссылки','ссылок') + ' → «' + where + '»');
     finishAdd(made);
   }
 });
@@ -839,6 +859,7 @@ function addLinks(items, folder){
   }
   if(folder){ const f = byId(folder); if(f) f.open = true; }
   else ui.rootOpen = true;
+  ui.at = folder || null;      /* дальше вставлять будем сюда же */
   commit();
   return made;
 }
@@ -1142,7 +1163,7 @@ function addSheet(prefill, folderId){
   openSheet('<h2>Добавить ссылки</h2>' +
     '<p class="hint">Сколько угодно адресов, по одному в строке. Можно с названием: <span class="mono">Название | адрес</span>.</p>' +
     '<label class="field"><span>Адреса</span><textarea id="f-urls" spellcheck="false" placeholder="https://example.com&#10;Документация | https://developer.mozilla.org/"></textarea></label>' +
-    '<label class="field"><span>Папка</span><select id="f-folder">' + folderOptions(folderId || lastFolder) + '</select></label>' +
+    '<label class="field"><span>Папка</span><select id="f-folder">' + folderOptions(folderId === undefined ? ui.at : folderId) + '</select></label>' +
     '<div class="sheet-foot"><button class="btn" data-close>Отмена</button><button class="btn btn-primary" id="f-ok">Добавить</button></div>',
     s => {
       const ta = s.querySelector('#f-urls');
@@ -1152,7 +1173,6 @@ function addSheet(prefill, folderId){
         const items = parseLinksText(ta.value);
         if(!items.length){ ta.focus(); return toast('Не нашёл ни одного адреса'); }
         const folder = s.querySelector('#f-folder').value || null;
-        lastFolder = folder;
         const made = addLinks(items, folder);
         closeSheet();
         toast('Добавлено: ' + items.length);
@@ -1162,7 +1182,6 @@ function addSheet(prefill, folderId){
       ta.addEventListener('keydown', e => { if((e.metaKey || e.ctrlKey) && e.key === 'Enter') go(); });
     });
 }
-let lastFolder = null;
 function moveSheet(l){
   openSheet('<h2>Переместить</h2><p class="hint">' + esc(l.title || hostOf(l.url)) + '</p>' +
     '<label class="field"><span>Папка</span><select id="m-folder">' + folderOptions(l.folder) + '</select></label>' +
@@ -1288,10 +1307,14 @@ $('#moreBtn').onclick = e => {
     { k:'demo', label:'Убрать примеры', icon:ICO.rm, run:clearDemo }
   ]);
 };
-$('#q').addEventListener('input', e => { ui.q = e.target.value.trim(); renderCol(); });
+$('#q').addEventListener('input', e => {
+  ui.q = e.target.value.trim();
+  $('.search').classList.toggle('filled', !!e.target.value);
+  renderCol();
+});
 $('#q').addEventListener('keydown', e => {
   e.stopPropagation();
-  if(e.key === 'Escape'){ e.target.value = ''; ui.q = ''; e.target.blur(); renderCol(); }
+  if(e.key === 'Escape'){ e.target.value = ''; ui.q = ''; $('.search').classList.remove('filled'); e.target.blur(); renderCol(); }
 });
 
 $('#col').addEventListener('click', e => {
@@ -1319,7 +1342,10 @@ $('#col').addEventListener('click', e => {
     return;
   }
   const head = e.target.closest('.sec-head');
-  if(head && !e.target.closest('[contenteditable]')) toggleFolder(head.dataset.fid || null);
+  if(head && !e.target.closest('[contenteditable]')){
+    ui.at = head.dataset.fid || null;
+    toggleFolder(head.dataset.fid || null);
+  }
 });
 $('#col').addEventListener('dblclick', e => {
   const n = e.target.closest('.sec-head [data-name]');
@@ -1525,7 +1551,7 @@ document.addEventListener('drop', e => {
   const items = extractFromDT(e.dataTransfer);
   if(!items.length) return toast('В этом перетаскивании не нашлось адреса');
   const made = addLinks(items, fid);
-  toast('Сохранено: ' + items.length + ' ' + plural(items.length,'ссылка','ссылки','ссылок'));
+  toast('Сохранено: ' + items.length + ' ' + plural(items.length,'ссылка','ссылки','ссылок') + ' → «' + folderLabel(fid) + '»');
   finishAdd(made);
 });
 function extractFromDT(dt){
@@ -1584,9 +1610,11 @@ document.addEventListener('paste', e => {
   if(!items.length) return;
   e.preventDefault();
   if(items.length > 1) return addSheet(text.trim());
-  const made = addLinks(items, lastFolder);
+  const where = folderLabel(ui.at);
+  const made = addLinks(items, ui.at);
   const l = state.links.find(x => x.id === made[0].id);
-  toast('Сохранено: ' + (l ? l.title : hostOf(items[0].url)));
+  const name = (l ? l.title : hostOf(items[0].url)) || '';
+  toast((name.length > 38 ? name.slice(0,37) + '…' : name) + ' → «' + where + '»');
   finishAdd(made);
 });
 addEventListener('keydown', e => {
@@ -1596,7 +1624,7 @@ addEventListener('keydown', e => {
     if(open) return closeSheet();
     if(menuEl.classList.contains('on')) return closeMenu();
     if(dnd) return endDrag();
-    if(ui.q){ ui.q = ''; $('#q').value = ''; renderCol(); }
+    if(ui.q){ ui.q = ''; $('#q').value = ''; $('.search').classList.remove('filled'); renderCol(); }
     return;
   }
   if(open) return;
