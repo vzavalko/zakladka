@@ -4,7 +4,7 @@
 таскаются мышью между ними и открываются по клику. Чтобы не держать в Chrome
 полсотни вкладок ради «потом посмотрю».
 
-**Сайт:** https://vzavalko.github.io/kartoteka/
+**Сайт:** https://vzavalko.github.io/zakladka/
 
 ## Что это
 
@@ -21,7 +21,7 @@
 - **`⌘V` с голым адресом.** Для YouTube, Vimeo, SoundCloud, Flickr и TED название
   подтянется из сети само (эти сервисы отдают oEmbed всем). Для остальных соберётся
   из адреса: `/kak-my-delali-sajt/` → «Как мы делали сайт».
-- **Расширение Chrome** — [vzavalko/kartoteka-extension](https://github.com/vzavalko/kartoteka-extension):
+- **Расширение Chrome** — [vzavalko/zakladka-extension](https://github.com/vzavalko/zakladka-extension):
   сдаёт открытые вкладки пачкой с настоящими заголовками и закрывает их, умеет узнать
   название по любому адресу и подменяет страницу новой вкладки. На расширение
   ограничения браузера не распространяются, поэтому названия оно достаёт для всего.

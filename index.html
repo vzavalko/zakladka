@@ -566,13 +566,27 @@ function plural(n,a,b,c){
 }
 
 /* ─────────────────────── состояние ─────────────────────── */
-const LS = 'kartoteka.v1', LS_UI = 'kartoteka.ui';
+const LS = 'zakladka.v1', LS_UI = 'zakladka.ui';
 let state = { v:1, folders:[], links:[] };
 let ui = { view:'grid', q:'', at:null };
 let iconMode = true;
 const undoStack = [], redoStack = [];
+const LS_ICONS = 'zakladka.icons';
 const lsRead = (k, fb) => { try{ const s = localStorage.getItem(k); return s ? JSON.parse(s) : fb; }catch(e){ return fb; } };
 const lsWrite = (k, v) => { try{ localStorage.setItem(k, JSON.stringify(v)); return true; }catch(e){ return false; } };
+
+/* Сервис назывался «Картотека», ключи хранения — kartoteka.*. Переезжаем на
+   zakladka.* один раз при первом открытии: иначе всё накопленное просто
+   исчезнет. Старые ключи не стираем — пусть полежат запасным выходом. */
+(function migrateKeys(){
+  for(const name of ['v1','ui','icons','favs']){
+    try{
+      const from = localStorage.getItem('kartoteka.' + name);
+      if(from !== null && localStorage.getItem('zakladka.' + name) === null)
+        localStorage.setItem('zakladka.' + name, from);
+    }catch(e){}
+  }
+})();
 
 function seed(){
   const f = (name,color,parent) => ({ id:uid(), name, parent:parent||null, order:0, color, open:true });
@@ -627,7 +641,7 @@ function setSync(st){
 }
 
 function initStore(){
-  iconMode = lsRead('kartoteka.icons', true) !== false;
+  iconMode = lsRead(LS_ICONS, true) !== false;
   state = lsRead(LS, null) || seed();
   ui = Object.assign(ui, lsRead(LS_UI, {}));
   ui.q = '';
@@ -746,7 +760,7 @@ function card(l){
 
    Неудачи держим только в памяти сессии: если DuckDuckGo прилёг, буквы
    вернутся значками после перезагрузки, а не останутся навсегда. */
-const LS_FAV = 'kartoteka.favs';
+const LS_FAV = 'zakladka.favs';
 const iconSrc = new Map(Object.entries(lsRead(LS_FAV, {}) || {}));
 const iconBad = new Set();
 let favTimer = null;
@@ -854,16 +868,22 @@ async function enrichOne(id){
 let bridge = false, bridgeSeq = 0;
 const bridgeWaits = new Map();
 
+/* Ключ сообщения переименован вместе с сервисом, но расширение у человека может
+   быть ещё старое — поэтому слушаем оба имени, а свои письма подписываем сразу
+   двумя. Когда все обновятся, вторую подпись можно убрать. */
+const MARK = 'zakladka', MARK_OLD = 'kartoteka';
+const signed = (kind, rest) => Object.assign({ [MARK]:kind, [MARK_OLD]:kind }, rest);
+
 addEventListener('message', e => {
   if(e.source !== window || !e.data || typeof e.data !== 'object') return;
-  const d = e.data;
-  if(d.kartoteka === 'hello'){ bridge = true; setSync('ok'); return; }
-  if(d.kartoteka === 'resolved'){
+  const d = e.data, kind = d[MARK] || d[MARK_OLD];
+  if(kind === 'hello'){ bridge = true; setSync('ok'); return; }
+  if(kind === 'resolved'){
     const fn = bridgeWaits.get(d.id);
     if(fn){ bridgeWaits.delete(d.id); fn(Array.isArray(d.items) ? d.items : []); }
     return;
   }
-  if(d.kartoteka === 'push' && Array.isArray(d.items)){
+  if(kind === 'push' && Array.isArray(d.items)){
     const items = d.items
       .map(x => ({ url: urlOf(x && x.url), title: (x && x.title) || '' }))
       .filter(x => x.url);
@@ -879,7 +899,7 @@ function askBridge(urls){
   const id = ++bridgeSeq;
   return new Promise(res => {
     bridgeWaits.set(id, res);
-    postMessage({ kartoteka:'resolve', id, urls }, location.origin);
+    postMessage(signed('resolve', { id, urls }), location.origin);
     setTimeout(() => { if(bridgeWaits.delete(id)) res([]); }, 20000);
   });
 }
@@ -1305,10 +1325,10 @@ function helpSheet(){
     '<div class="sheet-foot"><button class="btn btn-ink" data-close>Понятно</button></div>');
 }
 function exportJson(){
-  const data = JSON.stringify({ app:'kartoteka', v:1, exported:new Date().toISOString(), folders:state.folders, links:state.links }, null, 2);
+  const data = JSON.stringify({ app:'zakladka', v:1, exported:new Date().toISOString(), folders:state.folders, links:state.links }, null, 2);
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([data], { type:'application/json' }));
-  a.download = 'kartoteka-' + new Date().toISOString().slice(0,10) + '.json';
+  a.download = 'zakladka-' + new Date().toISOString().slice(0,10) + '.json';
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 4000);
   toast('Файл выгружен');
@@ -1332,7 +1352,7 @@ function importJson(file){
       });
       commit();
       toast('Загружено: ' + d.links.length + ' ' + plural(d.links.length,'ссылка','ссылки','ссылок'));
-    }catch(e){ toast('Файл не похож на выгрузку картотеки'); }
+    }catch(e){ toast('Файл не похож на выгрузку ZAKLADKA'); }
   };
   r.readAsText(file);
 }
@@ -1371,7 +1391,7 @@ $('#moreBtn').onclick = e => {
     { k:'imp', label:'Загрузить из JSON', icon:ICO.folder, run:()=>$('#importFile').click() },
     '-',
     { k:'icons', label:iconMode ? 'Выключить значки сайтов' : 'Включить значки сайтов', icon:ICO.copy,
-      run:()=>{ iconMode = !iconMode; lsWrite('kartoteka.icons', iconMode); render(); } },
+      run:()=>{ iconMode = !iconMode; lsWrite(LS_ICONS, iconMode); render(); } },
     { k:'demo', label:'Убрать примеры', icon:ICO.rm, run:clearDemo }
   ]);
 };
