@@ -144,13 +144,6 @@ body.dragging,body.dragging *{cursor:grabbing!important;user-select:none}
 .btn-ghost{border-color:transparent;background:transparent}
 .btn-ghost:hover{background:var(--surf);border-color:transparent}
 .btn-icon{width:33px;padding:0;position:relative}
-.btn-icon .cnt{
-  position:absolute;top:-2px;right:-2px;min-width:15px;height:15px;padding:0 4px;
-  border-radius:999px;background:var(--accent);color:var(--accent-ink);
-  font-family:'JetBrains Mono',monospace;font-size:9px;font-style:normal;line-height:15px;
-  text-align:center;box-shadow:0 0 0 2px var(--paper);
-}
-.btn-icon .cnt[hidden]{display:none}
 .btn.is-on{background:var(--surf-2);border-color:transparent;color:var(--text)}
 .btn-danger:hover{color:var(--danger);border-color:var(--danger);background:var(--danger-soft)}
 @media (max-width:620px){ .btn .t{display:none} .btn{padding:0 10px} }
@@ -264,6 +257,33 @@ body.dragging,body.dragging *{cursor:grabbing!important;user-select:none}
 .sec-acts svg{width:14px;height:14px}
 .sec-body{padding:2px 0 16px}
 .sec.nested{margin-bottom:0;margin-left:26px}
+/* Раскрытие и сворачивание — плавное. Высота содержимого заранее неизвестна,
+   а до «auto» доехать нельзя, поэтому едет строка сетки: 0fr → 1fr. Тело
+   папки для этого всегда в разметке, даже у свёрнутой — иначе анимировать
+   нечего: перерисовка создавала бы элемент сразу в конечном виде. */
+.sec-wrap{
+  display:grid;grid-template-rows:0fr;
+  transition:grid-template-rows .34s cubic-bezier(.32,.72,0,1);
+}
+.sec.open > .sec-wrap{grid-template-rows:1fr}
+/* Отдельный обрезающий слой нужен из-за border-box: элемент с полями не может
+   стать ниже собственных полей, и свёрнутая папка оставляла бы полоску в 18px.
+   Поэтому поля живут внутри, а сжимается пустая обёртка. */
+/* Свёрнутое прячем и от клавиатуры: карточки остаются в разметке, и без
+   этого Tab уводил бы фокус на невидимые ссылки. Прячем с задержкой — ровно
+   когда схлопывание закончилось, иначе содержимое пропадало бы сразу. */
+.sec-wrap > .sec-clip{
+  overflow:hidden;min-height:0;visibility:hidden;transition:visibility 0s linear .34s;
+}
+.sec.open > .sec-wrap > .sec-clip{visibility:visible;transition-delay:0s}
+.sec-clip > .sec-body{
+  opacity:0;transform:translateY(-5px);
+  transition:opacity .19s ease,transform .3s cubic-bezier(.32,.72,0,1);
+}
+.sec.open > .sec-wrap > .sec-clip > .sec-body{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){
+  .sec-wrap,.sec-clip > .sec-body,.tw{transition:none}
+}
 
 /* ─── карточки ─── */
 .links{display:grid;gap:10px;grid-template-columns:repeat(5,minmax(0,1fr));padding:4px 0 2px;min-height:16px}
@@ -442,7 +462,6 @@ body.dragging,body.dragging *{cursor:grabbing!important;user-select:none}
     <div class="bar-right">
       <button class="btn btn-icon btn-ghost" id="tabsBtn" aria-label="Открытые вкладки" title="Открытые вкладки" aria-expanded="false">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"><path d="M8 4.7C6.8 3.7 5 3.3 2.4 3.5v8.2c2.6-.2 4.4.2 5.6 1.2 1.2-1 3-1.4 5.6-1.2V3.5C11 3.3 9.2 3.7 8 4.7Z"/><path d="M8 4.7v8.2"/></svg>
-        <i class="cnt" id="tabsCnt" hidden></i>
       </button>
       <div class="seg" role="group" aria-label="Вид">
         <button id="vGrid" aria-pressed="true" aria-label="Плитка"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="5" height="5" rx="1.4"/><rect x="9" y="2" width="5" height="5" rx="1.4"/><rect x="2" y="9" width="5" height="5" rx="1.4"/><rect x="9" y="9" width="5" height="5" rx="1.4"/></svg></button>
@@ -704,13 +723,16 @@ let saveTimer = null, heldRemote = null;
 const snapshot = () => JSON.stringify(state);
 
 function pushUndo(){ undoStack.push(snapshot()); if(undoStack.length > 40) undoStack.shift(); redoStack.length = 0; }
-function commit(){
+/* Раскрытие папки меняет состояние, но перерисовывать колонку нельзя: новая
+   разметка родилась бы уже раскрытой, и анимации бы не было. Поэтому запись
+   на диск отделена от отрисовки. */
+function persist(){
   lsWrite(LS, state);
-  render();
   setSync('busy');
   clearTimeout(saveTimer);
   saveTimer = setTimeout(() => setSync(lsWrite(LS, state) === false ? 'err' : 'ok'), 220);
 }
+function commit(){ persist(); render(); }
 function restore(json){ state = JSON.parse(json); commit(); }
 function flushHeldRemote(){}
 
@@ -781,6 +803,18 @@ function renderCol(){
 }
 
 const folderLabel = id => id ? ((byId(id) || {}).name || 'папка') : 'Без папки';
+/* Отметку активной папки переставляем по месту: перерисовка здесь убила бы
+   анимацию раскрытия, которая начинается тем же кликом. */
+function markTarget(){
+  const cur = ui.at || null;
+  document.querySelectorAll('.sec-head').forEach(h => {
+    const on = (h.dataset.fid || null) === cur;
+    h.classList.toggle('is-target', on);
+    if(on) h.title = 'Вставленные ссылки попадут сюда'; else h.removeAttribute('title');
+  });
+  saveUi();
+  if(tabsOn) renderTabs();
+}
 function secHead(fid, name, dot, count, opts){
   const o = opts || {};
   const target = (fid || null) === (ui.at || null);
@@ -800,7 +834,8 @@ function secRoot(links, searching){
   const open = searching || ui.rootOpen !== false;
   return '<div class="sec' + (open ? ' open' : '') + '" data-fid="">' +
     secHead('', 'Без папки', 'var(--muted)', linksIn(null).length, { menu:false }) +
-    (open ? '<div class="sec-body">' + linksGrid(links, '') + '</div>' : '') + '</div>';
+    '<div class="sec-wrap"><div class="sec-clip"><div class="sec-body">' +
+      linksGrid(links, '') + '</div></div></div></div>';
 }
 function secFolder(f, m, depth){
   if(m && !hasMatch(f.id, m)) return '';
@@ -808,14 +843,12 @@ function secFolder(f, m, depth){
   const kids = kidsOf(f.id);
   const links = m ? linksIn(f.id).filter(l => m.has(l.id)) : linksIn(f.id);
   let body = '';
-  if(open){
-    for(const k of kids) body += secFolder(k, m, depth + 1);
-    body += linksGrid(links, f.id);
-    if(!m && !kids.length && !links.length) body += '<div class="sec-empty">Пусто — перетащите сюда ссылку или нажмите «+».</div>';
-  }
+  for(const k of kids) body += secFolder(k, m, depth + 1);
+  body += linksGrid(links, f.id);
+  if(!m && !kids.length && !links.length) body += '<div class="sec-empty">Пусто — перетащите сюда ссылку или нажмите «+».</div>';
   return '<div class="sec' + (open ? ' open' : '') + (depth ? ' nested' : '') + '" data-fid="' + f.id + '">' +
     secHead(f.id, f.name, DOT[f.color % 6], countDeep(f.id), { nameEditable:true }) +
-    (open ? '<div class="sec-body">' + body + '</div>' : '') + '</div>';
+    '<div class="sec-wrap"><div class="sec-clip"><div class="sec-body">' + body + '</div></div></div></div>';
 }
 function linksGrid(links, fid){
   return '<div class="links' + (ui.view === 'list' ? ' list' : '') + '" data-fid="' + fid + '">' +
@@ -1089,17 +1122,36 @@ function renameFolder(id, name){
   if(!name || name === f.name) return render();
   pushUndo(); f.name = name; commit();
 }
+const secEl = id => document.querySelector('.sec[data-fid="' + (id || '') + '"]');
+/* Класс переключаем прямо на живом элементе — тогда срабатывает переход CSS. */
+function showFolder(id, open){
+  const el = secEl(id);
+  if(!el) return false;
+  el.classList.toggle('open', open);
+  return true;
+}
 function toggleFolder(id){
-  if(!id){ ui.rootOpen = ui.rootOpen === false; render(); return; }
+  if(!id){
+    ui.rootOpen = ui.rootOpen === false;
+    if(!showFolder(null, ui.rootOpen)) render(); else saveUi();
+    return;
+  }
   const f = byId(id); if(!f) return;
-  pushUndo(); f.open = !isOpen(f); commit();
+  pushUndo();
+  f.open = !isOpen(f);
+  if(showFolder(id, f.open)) persist(); else commit();
 }
 function foldAll(){
   const anyOpen = state.folders.some(isOpen);
   pushUndo();
   state.folders.forEach(f => f.open = !anyOpen);
   ui.rootOpen = !anyOpen;
-  commit();
+  /* все разом — тем же переключением класса, иначе вся колонка моргнёт */
+  const all = document.querySelectorAll('.sec');
+  if(all.length){
+    all.forEach(el => el.classList.toggle('open', !anyOpen));
+    persist(); saveUi();
+  } else commit();
   toast(anyOpen ? 'Все папки свёрнуты' : 'Все папки раскрыты');
 }
 async function removeFolder(id){
@@ -1488,14 +1540,7 @@ let openTabs = [], tabsOn = false, tabsAsked = false;
 
 function setOpenTabs(items){
   openTabs = (items || []).filter(t => t && t.url && urlOf(t.url));
-  paintTabsCount();
   if(tabsOn) renderTabs();
-}
-function paintTabsCount(){
-  const c = $('#tabsCnt');
-  const n = bridge ? openTabs.length : 0;
-  c.textContent = n;
-  c.hidden = !n || tabsOn;
 }
 async function refreshTabs(){
   if(!bridge) return;
@@ -1508,7 +1553,6 @@ function toggleTabs(on){
   $('#tabs').hidden = !tabsOn;
   $('#tabsBtn').classList.toggle('is-on', tabsOn);
   $('#tabsBtn').setAttribute('aria-expanded', String(tabsOn));
-  paintTabsCount();
   saveUi();
   if(tabsOn){ renderTabs(); refreshTabs(); }
 }
@@ -1559,7 +1603,7 @@ async function takeTabs(tids, folder, place){
   if(place && made.length === 1) placeAt(made[0].id, place);
   const ids = list.map(t => t.id);
   openTabs = openTabs.filter(t => !ids.includes(t.id));
-  renderTabs(); paintTabsCount();
+  renderTabs();
   await askExt('close', { ids }, 8000);
   toast('Забрано: ' + made.length + ' ' + plural(made.length,'вкладка','вкладки','вкладок') +
         ' → «' + folderLabel(folder === undefined ? ui.at : folder) + '»');
@@ -1790,7 +1834,6 @@ async function backupNow(force){
 }
 let greeted = false;
 function onBridge(){
-  paintTabsCount();
   if(tabsOn){ renderTabs(); refreshTabs(); }   /* заменяем «нужно расширение» списком */
   if(greeted) return;
   greeted = true;
@@ -1872,6 +1915,7 @@ $('#col').addEventListener('click', e => {
   const head = e.target.closest('.sec-head');
   if(head && !e.target.closest('[contenteditable]')){
     ui.at = head.dataset.fid || null;
+    markTarget();
     toggleFolder(head.dataset.fid || null);
   }
 });
@@ -1955,7 +1999,8 @@ function hoverOpen(fid){
   hoverTimer = setTimeout(() => {
     if(!dnd || !dnd.armed) return;
     if(fid){ const f = byId(fid); if(f) f.open = true; } else ui.rootOpen = true;
-    lsWrite(LS, state); render();
+    if(!showFolder(fid, true)) render();
+    lsWrite(LS, state);
   }, 600);
 }
 function hitTest(x, y){
