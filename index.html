@@ -94,20 +94,32 @@ body.dragging,body.dragging *{cursor:grabbing!important;user-select:none}
 }
 @media (max-width:700px){ .brand b{display:none} }
 
+/* Свёрнутое поле — круглая кнопка с лупой. Клик по label ставит фокус
+   в input, поле разворачивается; лупа не ездит, потому что в свёрнутом
+   виде 33px она ровно по центру: (33-14)/2 = 9.5. */
 .search{
-  position:relative;display:flex;align-items:center;min-width:0;flex:0 0 auto;width:204px;
+  position:relative;display:flex;align-items:center;min-width:0;flex:0 0 auto;width:33px;
   transition:width .24s cubic-bezier(.2,.8,.3,1);
 }
-/* при наборе поле плавно разворачивается обратно на те же 40% */
 .search:focus-within,.search.filled{width:340px}
-.search svg{position:absolute;left:11px;width:14px;height:14px;color:var(--muted);pointer-events:none}
-.search input{
-  width:100%;background:var(--surf);border:1px solid transparent;border-radius:999px;
-  padding:7px 14px 7px 31px;font-size:13px;-webkit-appearance:none;
+.search svg{
+  position:absolute;left:9.5px;width:14px;height:14px;color:var(--muted);
+  pointer-events:none;transition:color .13s;
 }
-.search input::placeholder{color:var(--muted)}
-.search input:focus{outline:none;border-color:var(--accent-line);background:var(--paper)}
-@media (max-width:620px){ .search,.search:focus-within,.search.filled{flex:1 1 140px;width:auto} }
+.search:hover svg{color:var(--text-2)}
+.search input{
+  width:100%;height:33px;background:var(--surf);border:1px solid transparent;border-radius:999px;
+  padding:0 14px 0 29px;font-size:13px;cursor:pointer;-webkit-appearance:none;
+}
+/* подсказка появляется только в развёрнутом поле, иначе она торчит из кнопки */
+.search input::placeholder{color:var(--muted);opacity:0}
+.search:focus-within input::placeholder{opacity:1}
+.search:not(:focus-within):not(.filled) input:hover{background:var(--surf-2)}
+.search input:focus{outline:none;cursor:text;border-color:var(--accent-line);background:var(--paper)}
+@media (max-width:620px){
+  .search,.search:focus-within,.search.filled{flex:1 1 140px;width:auto}
+  .search input::placeholder{opacity:1}
+}
 
 .bar-right{display:flex;align-items:center;gap:7px;margin-left:auto;flex:none}
 .btn{
@@ -178,10 +190,9 @@ body.dragging,body.dragging *{cursor:grabbing!important;user-select:none}
   background:var(--surf);border-radius:999px;padding:3px 9px;flex:none;line-height:1.4;
 }
 .sec-head:hover .pill{background:var(--surf-2)}
-/* папка, в которую попадёт вставленное */
-.sec-head.is-target .pill{
-  background:var(--accent-soft);color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent-line);
-}
+/* Папка, в которую попадёт вставленное. Отмечаем только обводкой:
+   цветная заливка спорила с акцентом кнопки «Ссылка» и била по глазам. */
+.sec-head.is-target .pill{box-shadow:inset 0 0 0 1px var(--line-2)}
 .sec-acts{display:flex;align-items:center;gap:2px;margin-left:auto;flex:none;opacity:0;transition:opacity .12s}
 .sec-head:hover .sec-acts,.sec-head:focus-within .sec-acts{opacity:1}
 .sec-acts button{width:27px;height:27px;border-radius:999px;display:grid;place-items:center;color:var(--muted)}
@@ -703,9 +714,11 @@ function linksGrid(links, fid){
 }
 function card(l){
   const f = favOf(l.url);
+  const ic = favIcon(l.url);
   return '<div class="card" data-id="' + l.id + '">' +
     '<a class="card-main" draggable="false" href="' + esc(l.url) + '" target="_blank" rel="noopener noreferrer">' +
-      '<i class="fav" style="background:' + f.color + '">' + esc(f.letter) + favImg(l.url) + '</i>' +
+      '<i class="fav' + (ic.ready ? ' has-icon' : '') + '" style="background:' + f.color + '">' +
+        esc(f.letter) + ic.img + '</i>' +
       '<span class="card-txt">' +
         '<span class="card-title" data-title>' + esc(l.title || titleFromUrl(l.url)) + (l.demo ? '<i class="chip-demo">пример</i>' : '') + '</span>' +
         '<span class="card-host">' + esc(hostOf(l.url)) + '</span>' +
@@ -718,17 +731,66 @@ function card(l){
 }
 /* Значок сайта: сначала DuckDuckGo (широкий охват и приличное качество),
    если не отдал — favicon.ico самого сайта, если и его нет — остаётся буква.
-   Ни один запрос не уходит на сервер Картотеки: его попросту нет. */
-function favImg(url){
-  if(!iconMode) return '';
-  let host = ''; try{ host = new URL(url).hostname; }catch(e){ return ''; }
-  if(!host) return '';
-  const own = 'https://' + host + '/favicon.ico';
-  return '<img loading="lazy" alt="" src="https://icons.duckduckgo.com/ip3/' + encodeURIComponent(host) + '.ico"' +
-         ' onload="this.parentNode.classList.add(&apos;has-icon&apos;)"' +
-         ' onerror="this.onerror=null;this.src=&quot;' + own + '&quot;;' +
-         'this.addEventListener(&apos;error&apos;,()=>{this.parentNode.classList.remove(&apos;has-icon&apos;);this.remove()})">';
+   Ни один запрос не уходит на сервер Картотеки: его попросту нет.
+
+   Удачные адреса помним. Без этого каждая перерисовка (а она полная — при
+   развороте папки колонка собирается заново) рождала новые <img>: плитка
+   секунду показывала цветную букву и только потом, по onload, белела. Со
+   стороны это выглядело как вспышка всех значков разом.
+
+   Неудачи держим только в памяти сессии: если DuckDuckGo прилёг, буквы
+   вернутся значками после перезагрузки, а не останутся навсегда. */
+const LS_FAV = 'kartoteka.favs';
+const iconSrc = new Map(Object.entries(lsRead(LS_FAV, {}) || {}));
+const iconBad = new Set();
+let favTimer = null;
+function saveIcons(){
+  clearTimeout(favTimer);
+  favTimer = setTimeout(() => {
+    const keep = [...iconSrc].slice(-500);
+    lsWrite(LS_FAV, Object.fromEntries(keep));
+  }, 400);
 }
+const ddgIcon = host => 'https://icons.duckduckgo.com/ip3/' + encodeURIComponent(host) + '.ico';
+
+function favIcon(url){
+  const none = { img:'', ready:false };
+  if(!iconMode) return none;
+  let host = ''; try{ host = new URL(url).hostname; }catch(e){ return none; }
+  if(!host || iconBad.has(host)) return none;
+  const known = iconSrc.get(host);
+  return {
+    /* известный значок рисуем сразу и без lazy: он уже в кеше браузера,
+       а отложенная загрузка добавляла ту самую задержку в кадр */
+    img: '<img alt="" data-host="' + esc(host) + '"' +
+         (known ? ' decoding="sync"' : ' loading="lazy" data-try="ddg"') +
+         ' src="' + esc(known || ddgIcon(host)) + '">',
+    ready: !!known
+  };
+}
+
+/* load и error не всплывают — слушаем в фазе перехвата, зато один раз
+   на весь документ, а не по обработчику на каждой картинке. */
+const isFavImg = e => e.target instanceof HTMLImageElement && e.target.dataset.host;
+document.addEventListener('load', e => {
+  if(!isFavImg(e)) return;
+  const img = e.target, host = img.dataset.host;
+  if(img.parentNode) img.parentNode.classList.add('has-icon');
+  if(iconSrc.get(host) !== img.src){ iconSrc.set(host, img.src); saveIcons(); }
+}, true);
+document.addEventListener('error', e => {
+  if(!isFavImg(e)) return;
+  const img = e.target, host = img.dataset.host;
+  if(img.dataset.try === 'ddg'){            /* пробуем favicon.ico самого сайта */
+    img.dataset.try = 'own';
+    img.src = 'https://' + host + '/favicon.ico';
+    return;
+  }
+  iconBad.add(host);
+  if(iconSrc.delete(host)) saveIcons();
+  if(img.parentNode) img.parentNode.classList.remove('has-icon');
+  img.remove();
+}, true);
 function emptyAll(){
   return '<div class="empty">' +
     '<span class="mark"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M1.9 12.6V3.4h4.2l1.4 1.9h6.6v7.3a.8.8 0 0 1-.8.8H2.7a.8.8 0 0 1-.8-.8Z"/></svg></span>' +
