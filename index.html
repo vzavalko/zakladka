@@ -733,9 +733,7 @@ function plural(n,a,b,c){
 const LS = 'zakladka.v1', LS_UI = 'zakladka.ui';
 let state = { v:1, folders:[], links:[], trash:[] };
 let ui = { view:'grid', q:'', at:null };
-let iconMode = true;
 const undoStack = [], redoStack = [];
-const LS_ICONS = 'zakladka.icons';
 const lsRead = (k, fb) => { try{ const s = localStorage.getItem(k); return s ? JSON.parse(s) : fb; }catch(e){ return fb; } };
 const lsWrite = (k, v) => { try{ localStorage.setItem(k, JSON.stringify(v)); return true; }catch(e){ return false; } };
 
@@ -743,7 +741,7 @@ const lsWrite = (k, v) => { try{ localStorage.setItem(k, JSON.stringify(v)); ret
    zakladka.* один раз при первом открытии: иначе всё накопленное просто
    исчезнет. Старые ключи не стираем — пусть полежат запасным выходом. */
 (function migrateKeys(){
-  for(const name of ['v1','ui','icons','favs']){
+  for(const name of ['v1','ui','favs']){
     try{
       const from = localStorage.getItem('kartoteka.' + name);
       if(from !== null && localStorage.getItem('zakladka.' + name) === null)
@@ -808,7 +806,6 @@ function setSync(st){
 }
 
 function initStore(){
-  iconMode = lsRead(LS_ICONS, true) !== false;
   state = lsRead(LS, null) || seed();
   if(purgeTrash()) lsWrite(LS, state);   /* просроченное в корзине не держим */
   ui = Object.assign(ui, lsRead(LS_UI, {}));
@@ -964,7 +961,6 @@ const ddgIcon = host => 'https://icons.duckduckgo.com/ip3/' + encodeURIComponent
 
 function favIcon(url){
   const none = { img:'', ready:false };
-  if(!iconMode) return none;
   let host = ''; try{ host = new URL(url).hostname; }catch(e){ return none; }
   if(!host || iconBad.has(host)) return none;
   const known = iconSrc.get(host);
@@ -1961,10 +1957,7 @@ $('#moreBtn').onclick = e => {
     '-',
     { k:'exp', label:'Выгрузить в JSON', icon:ICO.copy, run:exportJson },
     { k:'imp', label:'Загрузить из JSON', icon:ICO.folder, run:()=>$('#importFile').click() },
-    { k:'bak', label:'Копия в расширении', icon:ICO.shield, run:backupSheet },
-    '-',
-    { k:'icons', label:iconMode ? 'Выключить значки сайтов' : 'Включить значки сайтов', icon:ICO.copy,
-      run:()=>{ iconMode = !iconMode; lsWrite(LS_ICONS, iconMode); render(); } }
+    { k:'bak', label:'Копия в расширении', icon:ICO.shield, run:backupSheet }
   ], btn);
 };
 $('#q').addEventListener('input', e => {
