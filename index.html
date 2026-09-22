@@ -157,10 +157,21 @@ body.dragging,body.dragging *{cursor:grabbing!important;user-select:none}
 .btn-danger:hover{color:var(--danger);border-color:var(--danger);background:var(--danger-soft)}
 @media (max-width:620px){ .btn{padding:0 10px} }
 
-.seg{display:flex;background:var(--surf);border-radius:999px;padding:2px;gap:2px;flex:none}
-.seg button{width:29px;height:27px;border-radius:999px;display:grid;place-items:center;color:var(--muted)}
-.seg button svg{width:14px;height:14px}
-.seg button[aria-pressed="true"]{background:var(--paper);color:var(--text);box-shadow:var(--sh-1)}
+.seg{position:relative;display:flex;background:var(--surf);border-radius:999px;padding:2px;gap:2px;flex:none}
+/* Белая пилюля не перекрашивается с кнопки на кнопку, а переезжает. */
+.seg::before{
+  content:'';position:absolute;top:2px;left:2px;width:29px;height:27px;border-radius:999px;
+  background:var(--paper);box-shadow:var(--sh-1);
+  transition:transform .3s cubic-bezier(.32,.72,0,1);
+}
+.seg[data-v="list"]::before{transform:translateX(31px)}
+.seg button{
+  position:relative;z-index:1;width:29px;height:27px;border-radius:999px;
+  display:grid;place-items:center;color:var(--muted);transition:color .2s;
+}
+.seg button svg{width:14px;height:14px;transition:transform .3s cubic-bezier(.32,.72,0,1)}
+.seg button[aria-pressed="true"]{color:var(--text)}
+.seg button[aria-pressed="true"] svg{transform:scale(1.07)}
 .dot-sync{width:7px;height:7px;border-radius:50%;background:var(--muted);flex:none;margin:0 3px}
 .dot-sync[data-state="ok"]{background:var(--d3)}
 .dot-sync[data-state="busy"]{background:var(--d4);animation:pulse 1s infinite}
@@ -173,11 +184,19 @@ body.dragging,body.dragging *{cursor:grabbing!important;user-select:none}
 .wrap{flex:1;overflow-y:auto;overscroll-behavior:contain;min-height:0}
 
 /* ─── полоса открытых вкладок ─── */
+/* Полоса не появляется рывком, а раздвигает колонку. Содержимое при этом не
+   переверстывается: детям задана своя ширина, а лишнее обрезает сама полоса.
+   Свёрнутая шириной в ноль не рисует ни фона, ни границы — они на детях. */
 .tabs{
-  width:330px;flex:none;display:flex;flex-direction:column;min-height:0;
-  border-left:1px solid var(--line);background:var(--surf);
+  width:0;flex:none;display:flex;flex-direction:column;min-height:0;overflow:hidden;
+  visibility:hidden;
+  transition:width .34s cubic-bezier(.32,.72,0,1),visibility 0s linear .34s;
 }
-.tabs[hidden]{display:none}
+.tabs.on{
+  width:330px;visibility:visible;
+  transition:width .34s cubic-bezier(.32,.72,0,1),visibility 0s;
+}
+.tabs > *{min-width:330px;background:var(--surf);border-left:1px solid var(--line)}
 .tabs-head{display:flex;align-items:center;gap:8px;padding:13px 14px 11px}
 .tabs-head b{font-size:13.5px;font-weight:600;letter-spacing:-.01em}
 .tabs-head .pill{margin-right:auto}
@@ -218,9 +237,12 @@ body.dragging,body.dragging *{cursor:grabbing!important;user-select:none}
 .ghost.g-tab{padding:8px 9px;display:flex;align-items:center;gap:9px;background:var(--paper)}
 .ghost .take{display:none}
 @media (max-width:900px){
-  .tabs{position:fixed;top:57px;right:0;bottom:0;width:min(330px,88vw);z-index:60;box-shadow:var(--sh-3)}
+  .tabs{position:fixed;top:57px;right:0;bottom:0;z-index:60}
+  .tabs.on{width:min(330px,88vw);box-shadow:var(--sh-3)}
+  .tabs > *{min-width:min(330px,88vw)}
 }
-.col{padding:16px 22px 140px}
+.col{padding:16px 22px 140px;transition:opacity .2s ease}
+.col.swap{opacity:.4}
 
 /* ─── секция-папка ─── */
 .sec{margin-bottom:2px}
@@ -335,6 +357,9 @@ body.dragging,body.dragging *{cursor:grabbing!important;user-select:none}
   box-shadow:inset 0 0 0 1px rgba(15,15,15,.07);
   color:transparent;
 }
+/* Только что добавленная карточка проявляется — видно, куда она легла. */
+.card.fresh{animation:pop .34s cubic-bezier(.32,.72,0,1)}
+@keyframes pop{from{opacity:0;transform:scale(.96) translateY(7px)}}
 .card.is-dead .card-main{opacity:.6}
 .chip-dead{
   display:inline-block;vertical-align:1px;margin-left:6px;padding:1px 5px;border-radius:5px;
@@ -427,9 +452,20 @@ body.dragging,body.dragging *{cursor:grabbing!important;user-select:none}
 .toast button{color:var(--ink);background:var(--hi);font-weight:600;font-size:12px;padding:4px 11px;border-radius:999px}
 @media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 
-.menu{position:fixed;z-index:200;min-width:198px;background:var(--paper);border:1px solid var(--line);
-  border-radius:14px;box-shadow:var(--sh-3);padding:5px;display:none}
-.menu.on{display:block}
+/* display:none анимировать нечем, поэтому прячем видимостью: разметка на
+   месте, и openMenu() по-прежнему может померить ширину перед тем, как
+   поставить меню на место. */
+.menu{
+  position:fixed;z-index:200;min-width:198px;background:var(--paper);border:1px solid var(--line);
+  border-radius:14px;box-shadow:var(--sh-3);padding:5px;
+  visibility:hidden;opacity:0;transform:scale(.96) translateY(-5px);transform-origin:top center;
+  pointer-events:none;
+  transition:opacity .15s ease,transform .22s cubic-bezier(.32,.72,0,1),visibility 0s linear .22s;
+}
+.menu.on{
+  visibility:visible;opacity:1;transform:none;pointer-events:auto;
+  transition:opacity .15s ease,transform .22s cubic-bezier(.32,.72,0,1),visibility 0s;
+}
 .menu button{display:flex;align-items:center;gap:10px;width:100%;padding:7px 10px;border-radius:9px;font-size:13px;text-align:left;color:var(--text-2)}
 .menu button:hover{background:var(--surf);color:var(--text)}
 .menu button.rm:hover{background:var(--danger-soft);color:var(--danger)}
@@ -439,10 +475,21 @@ body.dragging,body.dragging *{cursor:grabbing!important;user-select:none}
 .menu .swatches button{width:20px;height:20px;padding:0;border-radius:7px;flex:none}
 .menu .swatches button[aria-pressed="true"]{box-shadow:0 0 0 2px var(--paper),0 0 0 3.5px var(--ink)}
 
-.modal{position:fixed;inset:0;z-index:150;display:none;place-items:center;padding:20px;background:rgba(15,15,15,.34)}
-.modal.on{display:grid}
+.modal{
+  position:fixed;inset:0;z-index:150;display:grid;place-items:center;padding:20px;
+  background:rgba(15,15,15,0);visibility:hidden;pointer-events:none;
+  transition:background .22s ease,visibility 0s linear .22s;
+}
+.modal.on{
+  background:rgba(15,15,15,.34);visibility:visible;pointer-events:auto;
+  transition:background .22s ease,visibility 0s;
+}
 .sheet{background:var(--paper);border:1px solid var(--line);border-radius:18px;box-shadow:var(--sh-3);
-  width:100%;max-width:480px;padding:20px;max-height:85vh;overflow-y:auto}
+  width:100%;max-width:480px;padding:20px;max-height:85vh;overflow-y:auto;
+  opacity:0;transform:scale(.97) translateY(8px);
+  transition:opacity .18s ease,transform .26s cubic-bezier(.32,.72,0,1);
+}
+.modal.on .sheet{opacity:1;transform:none}
 .sheet h2{margin:0 0 4px;font-size:17px;font-weight:600;letter-spacing:-.018em}
 .sheet .hint{margin:0 0 14px;font-size:12.5px;color:var(--muted);line-height:1.55}
 .field{display:block;margin-bottom:11px}
@@ -481,7 +528,7 @@ body.dragging,body.dragging *{cursor:grabbing!important;user-select:none}
       <button class="btn btn-icon btn-ghost" id="tabsBtn" aria-label="Открытые вкладки" title="Открытые вкладки" aria-expanded="false">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"><path d="M8 4.7C6.8 3.7 5 3.3 2.4 3.5v8.2c2.6-.2 4.4.2 5.6 1.2 1.2-1 3-1.4 5.6-1.2V3.5C11 3.3 9.2 3.7 8 4.7Z"/><path d="M8 4.7v8.2"/></svg>
       </button>
-      <div class="seg" role="group" aria-label="Вид">
+      <div class="seg" id="seg" data-v="grid" role="group" aria-label="Вид">
         <button id="vGrid" aria-pressed="true" aria-label="Плитка"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="5" height="5" rx="1.4"/><rect x="9" y="2" width="5" height="5" rx="1.4"/><rect x="2" y="9" width="5" height="5" rx="1.4"/><rect x="9" y="9" width="5" height="5" rx="1.4"/></svg></button>
         <button id="vList" aria-pressed="false" aria-label="Список"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M2.5 4h11M2.5 8h11M2.5 12h11"/></svg></button>
       </div>
@@ -499,7 +546,7 @@ body.dragging,body.dragging *{cursor:grabbing!important;user-select:none}
   </header>
   <div class="mid">
     <div class="wrap" id="wrap"><div class="col" id="col"></div></div>
-    <aside class="tabs" id="tabs" hidden aria-label="Открытые вкладки">
+    <aside class="tabs" id="tabs" aria-label="Открытые вкладки">
       <div class="tabs-head">
         <b>Открыто сейчас</b><span class="pill" id="tabsN">0</span>
         <button data-act="tabs-refresh" title="Обновить список" aria-label="Обновить список"></button>
@@ -817,6 +864,7 @@ function renderCol(){
   if(m && !m.size) h += emptyBox('Ничего не нашлось', 'По запросу «' + esc(ui.q) + '» нет ни одной ссылки.');
   if(!ui.q) h += '<button class="newf" data-act="new-folder">' + ICO.plus + 'Новая папка</button>';
   col.innerHTML = h;
+  fresh.clear();   /* анимация уже вшита в созданную разметку, повтор не нужен */
 }
 
 const folderLabel = id => id ? ((byId(id) || {}).name || 'папка') : 'Без папки';
@@ -874,7 +922,8 @@ function linksGrid(links, fid){
 function card(l){
   const f = favOf(l.url);
   const ic = favIcon(l.url);
-  return '<div class="card' + (l.dead ? ' is-dead' : '') + '" data-id="' + l.id + '">' +
+  return '<div class="card' + (l.dead ? ' is-dead' : '') + (fresh.has(l.id) ? ' fresh' : '') +
+      '" data-id="' + l.id + '">' +
     '<a class="card-main" draggable="false" href="' + esc(l.url) + '" target="_blank" rel="noopener noreferrer">' +
       '<i class="fav' + (ic.ready ? ' has-icon' : '') + '" style="background:' + f.color + '">' +
         esc(f.letter) + ic.img + '</i>' +
@@ -1092,6 +1141,7 @@ async function finishAdd(made){
 /* ─────────────────────── действия ─────────────────────── */
 const subtreeLinks = id => subtreeIds(id).reduce((a,fid)=> a.concat(linksIn(fid)), []);
 
+let fresh = new Set();
 function addLinks(items, folder){
   if(!items.length) return [];
   pushUndo();
@@ -1106,6 +1156,7 @@ function addLinks(items, folder){
   if(folder){ const f = byId(folder); if(f) f.open = true; }
   else ui.rootOpen = true;
   ui.at = folder || null;      /* дальше вставлять будем сюда же */
+  fresh = new Set(made.map(m => m.id));
   commit();
   return made;
 }
@@ -1478,32 +1529,30 @@ function editUrlSheet(l){
     });
 }
 function helpSheet(){
-  openSheet('<h2>Как складывать сюда вкладки</h2>' +
-    (bridge ? '<p class="hint" style="color:var(--accent)"><b>Расширение подключено.</b> Названия узнаются для любого сайта, вкладки приезжают сюда сами.</p>' : '') +
-    '<p class="hint">Chrome не отдаёт страницам вкладку из полосы вкладок — она отрывается в новое окно мимо сайта. Остальное работает:</p>' +
-    '<ul><li><b>Перетащите значок слева от адреса</b> в адресной строке — прямо на нужную папку. Так приезжает <b>настоящий заголовок страницы</b>, это самый надёжный способ.</li>' +
-    '<li><b>Скопируйте ссылку на странице</b> (правый клик по ней или выделение с текстом) и нажмите <b>⌘V</b> — вместе со ссылкой приедет её текст.</li>' +
-    '<li><b>⌘V</b> с голым адресом тоже работает: название соберётся из самого адреса.</li>' +
-    '<li>Кнопка <b>«Ссылка»</b> принимает целый список, по одному адресу в строке.</li></ul>' +
-    '<p class="hint"><b>Данные лежат в этом браузере</b> и никуда не уходят: сервера у ZAKLADKA нет. ' +
-    'Поэтому между устройствами они не ездят — переносите выгрузкой в JSON из меню <kbd class="mono">⋯</kbd>.</p>' +
-    '<p class="hint" style="margin-bottom:6px"><b>Расширение Chrome</b></p>' +
-    '<p class="hint">Если поставлено расширение «ZAKLADKA — сдать вкладки»: <kbd class="mono">⌘⇧K</kbd> покажет список вкладок окна, ' +
-    '<kbd class="mono">⌘⇧S</kbd> сдаёт текущую, а поле в попапе узнаёт название по любому адресу. Вкладки закрываются, ' +
-    'ссылки ложатся в буфер <b>с настоящими заголовками</b> — остаётся нажать <kbd class="mono">⌘V</kbd> здесь. ' +
-    'Для сайтов без oEmbed это самый верный способ.</p>' +
-    '<p class="hint" style="margin-bottom:6px"><b>Откуда берётся название</b></p>' +
-    '<p class="hint">У YouTube, Vimeo, SoundCloud, Flickr и TED название подтягивается из сети само — эти сервисы отдают его всем желающим. ' +
-    'Остальные сайты браузеру читать не дают (запрещает CORS), и для них название берётся из перетаскивания, из буфера ' +
-    'или собирается из самого адреса: ' +
-    '<span class="mono">/kak-my-delali-sajt/</span> станет «Как мы делали сайт», <span class="mono">github.com/vzavalko/mind-viewer</span> — «vzavalko/mind-viewer». ' +
-    'Когда из адреса ничего не вытащить, карточка добавится и сразу встанет на переименование: название выделено, достаточно начать печатать.</p>' +
-    '<p class="hint" style="margin-bottom:6px"><b>Внутри картотеки</b></p>' +
-    '<ul><li>Клик по заголовку папки — свернуть или раскрыть. Двойной клик по названию — переименовать.</li>' +
-    '<li>Карточки и папки <b>таскаются</b>: на заголовок папки — внутрь, между карточками — поменять порядок. Если тащить над свёрнутой папкой, она сама раскроется.</li>' +
-    '<li>Папку на верхний или нижний край другой папки — встать рядом с ней.</li></ul>' +
+  openSheet('<h2>Как работает расширение</h2>' +
+    (bridge
+      ? '<p class="hint" style="color:var(--accent)"><b>Расширение подключено.</b></p>'
+      : '<p class="hint">Сейчас оно не подключено — как поставить, написано ниже.</p>') +
+    '<ul>' +
+    '<li><b>Показывает открытые вкладки.</b> Кнопка с книгой наверху. Перетащите вкладку в папку — ссылка сохранится, а вкладка закроется.</li>' +
+    '<li><b>Узнаёт настоящие названия страниц.</b> Без него название собирается из самого адреса.</li>' +
+    '<li><b>Хранит запасную копию</b> ссылок у себя — она переживёт очистку данных браузера.</li></ul>' +
+    '<p class="hint"><kbd class="mono">⌘⇧K</kbd> — список вкладок, <kbd class="mono">⌘⇧S</kbd> — убрать текущую вкладку.</p>' +
+    '<p class="hint" style="margin-bottom:6px"><b>Как поставить</b></p>' +
+    '<ul><li>Скачать папку: <span class="mono">github.com/vzavalko/zakladka-extension</span></li>' +
+    '<li>Открыть <span class="mono">chrome://extensions</span>, включить «Режим разработчика».</li>' +
+    '<li>«Загрузить распакованное расширение» → выбрать скачанную папку.</li></ul>' +
+    '<p class="hint" style="margin-bottom:6px"><b>Без расширения тоже работает</b></p>' +
+    '<ul><li>Перетащите значок слева от адреса прямо на папку.</li>' +
+    '<li>Скопируйте ссылку и нажмите <kbd class="mono">⌘V</kbd>.</li>' +
+    '<li>Круглая кнопка <b>+</b> принимает список адресов, по одному в строке.</li></ul>' +
+    '<p class="hint" style="margin-bottom:6px"><b>Внутри</b></p>' +
+    '<ul><li>Клик по названию папки — раскрыть, двойной клик — переименовать.</li>' +
+    '<li>Карточки и папки перетаскиваются. Подержите над свёрнутой папкой — она раскроется.</li></ul>' +
+    '<p class="hint"><b>Ссылки лежат только в этом браузере</b> и никуда не уходят. ' +
+    'На другое устройство их перенесёт выгрузка в JSON из этого же меню.</p>' +
     '<div class="mono" style="font-size:12px;line-height:1.9;color:var(--text-2)">' +
-    '/ — поиск · N — добавить · F — новая папка<br>E — свернуть или раскрыть всё · ⌘V — вставить · ⌘Z — отменить</div>' +
+    '/ — поиск · N — добавить · F — новая папка<br>E — свернуть всё · ⌘V — вставить · ⌘Z — отменить</div>' +
     '<div class="sheet-foot"><button class="btn btn-ink" data-close>Понятно</button></div>');
 }
 function exportJson(){
@@ -1569,7 +1618,7 @@ async function refreshTabs(){
 }
 function toggleTabs(on){
   tabsOn = on === undefined ? !tabsOn : !!on;
-  $('#tabs').hidden = !tabsOn;
+  $('#tabs').classList.toggle('on', tabsOn);
   $('#tabsBtn').classList.toggle('is-on', tabsOn);
   $('#tabsBtn').setAttribute('aria-expanded', String(tabsOn));
   saveUi();
@@ -1595,7 +1644,7 @@ function renderTabs(){
     foot.hidden = true;
     body.innerHTML = '<div class="tabs-note"><b>Нужно расширение.</b> Список открытых вкладок ' +
       'браузер странице не показывает — его приносит расширение ZAKLADKA. ' +
-      'Как поставить, написано в меню <b>⋯</b> → «Как складывать вкладки».</div>';
+      'Как поставить, написано в меню <b>⋯</b> → «Как работает расширение».</div>';
     return;
   }
   if(!openTabs.length){
@@ -1868,10 +1917,16 @@ async function backupSheet(){
 
 /* ─────────────────────── клики ─────────────────────── */
 function setView(v){
+  const swap = ui.view !== v && $('#col').children.length;
   ui.view = v;
+  $('#seg').dataset.v = v;
   $('#vGrid').setAttribute('aria-pressed', String(v === 'grid'));
   $('#vList').setAttribute('aria-pressed', String(v === 'list'));
+  /* карточки перестраиваются мгновенно, поэтому смягчаем подменой: колонка
+     гаснет на кадр и проявляется уже в новом виде */
+  if(swap) $('#col').classList.add('swap');
   render();
+  if(swap) requestAnimationFrame(() => requestAnimationFrame(() => $('#col').classList.remove('swap')));
 }
 $('#vGrid').onclick = () => setView('grid');
 $('#vList').onclick = () => setView('list');
@@ -1881,8 +1936,7 @@ $('#importFile').onchange = e => { const f = e.target.files[0]; if(f) importJson
 $('#moreBtn').onclick = e => {
   const r = e.currentTarget.getBoundingClientRect();
   openMenu(r.right - 210, r.bottom + 8, [
-    { k:'help', label:'Как складывать вкладки', icon:ICO.ext, run:helpSheet },
-    { k:'fold', label:'Свернуть или раскрыть всё', icon:ICO.folder, run:foldAll },
+    { k:'help', label:'Как работает расширение', icon:ICO.ext, run:helpSheet },
     '-',
     { k:'trash', label:'Корзина' + (trashCount() ? ' (' + trashCount() + ')' : ''), icon:ICO.trash, run:trashSheet },
     { k:'dupes', label:'Найти повторы', icon:ICO.copy, run:dupeSheet },
@@ -1893,8 +1947,7 @@ $('#moreBtn').onclick = e => {
     { k:'bak', label:'Копия в расширении', icon:ICO.shield, run:backupSheet },
     '-',
     { k:'icons', label:iconMode ? 'Выключить значки сайтов' : 'Включить значки сайтов', icon:ICO.copy,
-      run:()=>{ iconMode = !iconMode; lsWrite(LS_ICONS, iconMode); render(); } },
-    { k:'demo', label:'Убрать примеры', icon:ICO.rm, run:clearDemo }
+      run:()=>{ iconMode = !iconMode; lsWrite(LS_ICONS, iconMode); render(); } }
   ]);
 };
 $('#q').addEventListener('input', e => {
