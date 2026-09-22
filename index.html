@@ -143,7 +143,15 @@ body.dragging,body.dragging *{cursor:grabbing!important;user-select:none}
 .btn-ink:hover{background:var(--ink);border-color:var(--ink);filter:brightness(1.25)}
 .btn-ghost{border-color:transparent;background:transparent}
 .btn-ghost:hover{background:var(--surf);border-color:transparent}
-.btn-icon{width:33px;padding:0}
+.btn-icon{width:33px;padding:0;position:relative}
+.btn-icon .cnt{
+  position:absolute;top:-2px;right:-2px;min-width:15px;height:15px;padding:0 4px;
+  border-radius:999px;background:var(--accent);color:var(--accent-ink);
+  font-family:'JetBrains Mono',monospace;font-size:9px;font-style:normal;line-height:15px;
+  text-align:center;box-shadow:0 0 0 2px var(--paper);
+}
+.btn-icon .cnt[hidden]{display:none}
+.btn.is-on{background:var(--surf-2);border-color:transparent;color:var(--text)}
 .btn-danger:hover{color:var(--danger);border-color:var(--danger);background:var(--danger-soft)}
 @media (max-width:620px){ .btn .t{display:none} .btn{padding:0 10px} }
 
@@ -159,7 +167,57 @@ body.dragging,body.dragging *{cursor:grabbing!important;user-select:none}
 @keyframes pulse{50%{opacity:.25}}
 
 /* ─── полотно ─── */
+.mid{flex:1;display:flex;min-height:0}
 .wrap{flex:1;overflow-y:auto;overscroll-behavior:contain;min-height:0}
+
+/* ─── полоса открытых вкладок ─── */
+.tabs{
+  width:330px;flex:none;display:flex;flex-direction:column;min-height:0;
+  border-left:1px solid var(--line);background:var(--surf);
+}
+.tabs[hidden]{display:none}
+.tabs-head{display:flex;align-items:center;gap:8px;padding:13px 14px 11px}
+.tabs-head b{font-size:13.5px;font-weight:600;letter-spacing:-.01em}
+.tabs-head .pill{margin-right:auto}
+.tabs-head button{
+  width:27px;height:27px;border-radius:999px;display:grid;place-items:center;color:var(--muted);flex:none;
+}
+.tabs-head button:hover{background:var(--surf-2);color:var(--text)}
+.tabs-head svg{width:14px;height:14px}
+.tabs-body{flex:1;overflow-y:auto;overscroll-behavior:contain;padding:0 10px 10px}
+.tabs-foot{padding:10px 12px;border-top:1px solid var(--line);display:flex;gap:7px}
+.tabs-foot .btn{flex:1;justify-content:center}
+
+.tab-item{
+  position:relative;display:flex;align-items:center;gap:9px;padding:8px 9px;margin-bottom:3px;
+  background:var(--paper);border:1px solid var(--line);border-radius:var(--r-s);cursor:grab;
+  transition:border-color .12s,box-shadow .12s;
+}
+.tab-item:hover{border-color:var(--line-2);box-shadow:var(--sh-1)}
+.tab-item.lifted{opacity:.4}
+.tab-item .fav{width:19px;height:19px;font-size:9px;border-radius:5px}
+.tab-item .fav img{padding:2px}
+.tab-txt{min-width:0;flex:1}
+.tab-title{
+  font-size:12.5px;line-height:1.3;letter-spacing:-.005em;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word;
+}
+.tab-host{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);margin-top:2px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tab-item .take{
+  width:24px;height:24px;border-radius:999px;display:grid;place-items:center;flex:none;
+  color:var(--muted);opacity:0;transition:opacity .12s;
+}
+.tab-item:hover .take{opacity:1}
+.tab-item .take:hover{background:var(--accent-soft);color:var(--accent)}
+.tab-item .take svg{width:13px;height:13px}
+.tabs-note{padding:14px 12px;font-size:12.5px;line-height:1.5;color:var(--text-2)}
+.tabs-note b{color:var(--text)}
+.ghost.g-tab{padding:8px 9px;display:flex;align-items:center;gap:9px;background:var(--paper)}
+.ghost .take{display:none}
+@media (max-width:900px){
+  .tabs{position:fixed;top:57px;right:0;bottom:0;width:min(330px,88vw);z-index:60;box-shadow:var(--sh-3)}
+}
 .col{padding:16px 22px 140px}
 
 /* ─── секция-папка ─── */
@@ -247,6 +305,12 @@ body.dragging,body.dragging *{cursor:grabbing!important;user-select:none}
   background:#FFFFFF!important;
   box-shadow:inset 0 0 0 1px rgba(15,15,15,.07);
   color:transparent;
+}
+.card.is-dead .card-main{opacity:.6}
+.chip-dead{
+  display:inline-block;vertical-align:1px;margin-left:6px;padding:1px 5px;border-radius:5px;
+  background:var(--danger-soft);color:var(--danger);
+  font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.06em;text-transform:uppercase;
 }
 .card-txt{min-width:0;flex:1}
 .card-title{
@@ -376,6 +440,10 @@ body.dragging,body.dragging *{cursor:grabbing!important;user-select:none}
       <input id="q" type="search" placeholder="Быстрый поиск" autocomplete="off" spellcheck="false">
     </label>
     <div class="bar-right">
+      <button class="btn btn-icon btn-ghost" id="tabsBtn" aria-label="Открытые вкладки" title="Открытые вкладки" aria-expanded="false">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"><path d="M8 4.7C6.8 3.7 5 3.3 2.4 3.5v8.2c2.6-.2 4.4.2 5.6 1.2 1.2-1 3-1.4 5.6-1.2V3.5C11 3.3 9.2 3.7 8 4.7Z"/><path d="M8 4.7v8.2"/></svg>
+        <i class="cnt" id="tabsCnt" hidden></i>
+      </button>
       <div class="seg" role="group" aria-label="Вид">
         <button id="vGrid" aria-pressed="true" aria-label="Плитка"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="5" height="5" rx="1.4"/><rect x="9" y="2" width="5" height="5" rx="1.4"/><rect x="2" y="9" width="5" height="5" rx="1.4"/><rect x="9" y="9" width="5" height="5" rx="1.4"/></svg></button>
         <button id="vList" aria-pressed="false" aria-label="Список"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M2.5 4h11M2.5 8h11M2.5 12h11"/></svg></button>
@@ -393,7 +461,20 @@ body.dragging,body.dragging *{cursor:grabbing!important;user-select:none}
       </button>
     </div>
   </header>
-  <div class="wrap" id="wrap"><div class="col" id="col"></div></div>
+  <div class="mid">
+    <div class="wrap" id="wrap"><div class="col" id="col"></div></div>
+    <aside class="tabs" id="tabs" hidden aria-label="Открытые вкладки">
+      <div class="tabs-head">
+        <b>Открыто сейчас</b><span class="pill" id="tabsN">0</span>
+        <button data-act="tabs-refresh" title="Обновить список" aria-label="Обновить список"></button>
+        <button data-act="tabs-hide" title="Закрыть полосу" aria-label="Закрыть полосу"></button>
+      </div>
+      <div class="tabs-body" id="tabsBody"></div>
+      <div class="tabs-foot" id="tabsFoot" hidden>
+        <button class="btn" data-act="tabs-all">Забрать все</button>
+      </div>
+    </aside>
+  </div>
 </div>
 
 <div class="veil" id="veil">
@@ -567,7 +648,7 @@ function plural(n,a,b,c){
 
 /* ─────────────────────── состояние ─────────────────────── */
 const LS = 'zakladka.v1', LS_UI = 'zakladka.ui';
-let state = { v:1, folders:[], links:[] };
+let state = { v:1, folders:[], links:[], trash:[] };
 let ui = { view:'grid', q:'', at:null };
 let iconMode = true;
 const undoStack = [], redoStack = [];
@@ -643,9 +724,11 @@ function setSync(st){
 function initStore(){
   iconMode = lsRead(LS_ICONS, true) !== false;
   state = lsRead(LS, null) || seed();
+  if(purgeTrash()) lsWrite(LS, state);   /* просроченное в корзине не держим */
   ui = Object.assign(ui, lsRead(LS_UI, {}));
   ui.q = '';
   setView(ui.view || 'grid');
+  if(ui.tabs) toggleTabs(true);
   setSync('ok');
 }
 
@@ -659,11 +742,17 @@ const ICO = {
   rm:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3.5 4.5h9M6.5 4.5V3h3v1.5M5 4.5l.5 8.5h5l.5-8.5"/></svg>',
   copy:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><rect x="5.5" y="5.5" width="8" height="8" rx="1.6"/><path d="M10.5 3.5v-.5a1 1 0 0 0-1-1h-6a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1H4"/></svg>',
   folder:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M1.8 12.5v-9h4l1.4 1.8h7v7.2a.8.8 0 0 1-.8.8H2.6a.8.8 0 0 1-.8-.8Z"/></svg>',
-  up:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 13V3.5M4 7.5 8 3.5l4 4"/></svg>'
+  up:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 13V3.5M4 7.5 8 3.5l4 4"/></svg>',
+  x:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8"/></svg>',
+  sync:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13.2 7a5.2 5.2 0 0 0-9.1-2.5M2.8 9a5.2 5.2 0 0 0 9.1 2.5"/><path d="M13.4 3.6V7h-3.4M2.6 12.4V9h3.4"/></svg>',
+  trash:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2.6 4.4h10.8M6.2 4.4V2.8h3.6v1.6M4.2 4.4l.6 8.8h6.4l.6-8.8M6.6 7v4M9.4 7v4"/></svg>',
+  book:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"><path d="M8 4.7C6.8 3.7 5 3.3 2.4 3.5v8.2c2.6-.2 4.4.2 5.6 1.2 1.2-1 3-1.4 5.6-1.2V3.5C11 3.3 9.2 3.7 8 4.7Z"/><path d="M8 4.7v8.2"/></svg>',
+  shield:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M8 2.2 3.2 4v4.1c0 2.7 1.9 4.6 4.8 5.7 2.9-1.1 4.8-3 4.8-5.7V4Z"/><path d="m5.9 8 1.5 1.5L10.3 6.6"/></svg>'
 };
 
 /* ─────────────────────── отрисовка ─────────────────────── */
-function render(){ renderCol(); reapplyLift(); lsWrite(LS_UI, { view:ui.view, rootOpen:ui.rootOpen, at:ui.at }); }
+const saveUi = () => lsWrite(LS_UI, { view:ui.view, rootOpen:ui.rootOpen, at:ui.at, tabs:tabsOn });
+function render(){ renderCol(); if(tabsOn) renderTabs(); reapplyLift(); saveUi(); }
 
 const searchHits = () => {
   const q = ui.q.toLowerCase();
@@ -735,12 +824,13 @@ function linksGrid(links, fid){
 function card(l){
   const f = favOf(l.url);
   const ic = favIcon(l.url);
-  return '<div class="card" data-id="' + l.id + '">' +
+  return '<div class="card' + (l.dead ? ' is-dead' : '') + '" data-id="' + l.id + '">' +
     '<a class="card-main" draggable="false" href="' + esc(l.url) + '" target="_blank" rel="noopener noreferrer">' +
       '<i class="fav' + (ic.ready ? ' has-icon' : '') + '" style="background:' + f.color + '">' +
         esc(f.letter) + ic.img + '</i>' +
       '<span class="card-txt">' +
-        '<span class="card-title" data-title>' + esc(l.title || titleFromUrl(l.url)) + (l.demo ? '<i class="chip-demo">пример</i>' : '') + '</span>' +
+        '<span class="card-title" data-title>' + esc(l.title || titleFromUrl(l.url)) + (l.demo ? '<i class="chip-demo">пример</i>' : '') +
+          (l.dead ? '<i class="chip-dead">не отвечает</i>' : '') + '</span>' +
         '<span class="card-host">' + esc(hostOf(l.url)) + '</span>' +
       '</span></a>' +
     '<div class="card-tools">' +
@@ -877,10 +967,13 @@ const signed = (kind, rest) => Object.assign({ [MARK]:kind, [MARK_OLD]:kind }, r
 addEventListener('message', e => {
   if(e.source !== window || !e.data || typeof e.data !== 'object') return;
   const d = e.data, kind = d[MARK] || d[MARK_OLD];
-  if(kind === 'hello'){ bridge = true; setSync('ok'); return; }
-  if(kind === 'resolved'){
+  if(kind === 'hello'){ bridge = true; setSync('ok'); onBridge(); return; }
+  /* ответы на наши вопросы разбираем по одному правилу на вид ответа */
+  const take = REPLY[kind];
+  if(take){
+    if(kind === 'tabs-list' && !d.id) return setOpenTabs(d.items || []);
     const fn = bridgeWaits.get(d.id);
-    if(fn){ bridgeWaits.delete(d.id); fn(Array.isArray(d.items) ? d.items : []); }
+    if(fn){ bridgeWaits.delete(d.id); fn(take(d)); }
     return;
   }
   if(kind === 'push' && Array.isArray(d.items)){
@@ -889,19 +982,34 @@ addEventListener('message', e => {
       .filter(x => x.url);
     if(!items.length) return;
     const where = folderLabel(ui.at);
-    const made = addLinks(items, ui.at);
-    toast('Из браузера: ' + items.length + ' ' + plural(items.length,'ссылка','ссылки','ссылок') + ' → «' + where + '»');
-    finishAdd(made);
+    addChecked(items, ui.at).then(made => {
+      if(!made.length) return;
+      toast('Из браузера: ' + made.length + ' ' + plural(made.length,'ссылка','ссылки','ссылок') + ' → «' + where + '»');
+      finishAdd(made);
+    });
   }
 });
-function askBridge(urls){
-  if(!bridge || !urls.length) return Promise.resolve([]);
+const REPLY = {
+  resolved:    d => Array.isArray(d.items) ? d.items : [],
+  'tabs-list': d => Array.isArray(d.items) ? d.items : [],
+  closed:      d => d.closed | 0,
+  'alive-done':d => ({ denied:!!d.denied, items:Array.isArray(d.items) ? d.items : [] }),
+  'backup-done': d => ({ saved:!!d.saved, at:d.at || 0 })
+};
+/* Один вопрос — один id, ответ приходит письмом с тем же id. Без ответа в срок
+   отпускаем обещание сами, иначе вызывающий будет ждать вечно. */
+function askExt(kind, payload, ms){
+  if(!bridge) return Promise.resolve(null);
   const id = ++bridgeSeq;
   return new Promise(res => {
     bridgeWaits.set(id, res);
-    postMessage(signed('resolve', { id, urls }), location.origin);
-    setTimeout(() => { if(bridgeWaits.delete(id)) res([]); }, 20000);
+    postMessage(signed(kind, Object.assign({ id }, payload || {})), location.origin);
+    setTimeout(() => { if(bridgeWaits.delete(id)) res(null); }, ms || 20000);
   });
+}
+function askBridge(urls){
+  if(!bridge || !urls.length) return Promise.resolve([]);
+  return askExt('resolve', { urls }).then(r => r || []);
 }
 
 async function finishAdd(made){
@@ -1011,6 +1119,7 @@ function removeLink(id){
   const l = state.links.find(x => x.id === id); if(!l) return;
   const before = snapshot();
   pushUndo();
+  toTrash([l]);
   state.links = state.links.filter(x => x.id !== id);
   reindex(linksIn(l.folder));
   commit();
@@ -1261,10 +1370,12 @@ function addSheet(prefill, folderId){
         const items = parseLinksText(ta.value);
         if(!items.length){ ta.focus(); return toast('Не нашёл ни одного адреса'); }
         const folder = s.querySelector('#f-folder').value || null;
-        const made = addLinks(items, folder);
         closeSheet();
-        toast('Добавлено: ' + items.length);
-        finishAdd(made);
+        addChecked(items, folder).then(made => {
+          if(!made.length) return;
+          toast('Добавлено: ' + made.length);
+          finishAdd(made);
+        });
       };
       s.querySelector('#f-ok').onclick = go;
       ta.addEventListener('keydown', e => { if((e.metaKey || e.ctrlKey) && e.key === 'Enter') go(); });
@@ -1369,6 +1480,330 @@ function clearDemo(){
   toast('Примеры убраны', before);
 }
 
+/* ─────────────────────── полоса открытых вкладок ───────────────────────
+   Список вкладок собирает расширение: странице браузер про чужие вкладки
+   ничего не рассказывает. Перетащили карточку к себе — вкладка в браузере
+   закрывается, в этом вся затея. */
+let openTabs = [], tabsOn = false, tabsAsked = false;
+
+function setOpenTabs(items){
+  openTabs = (items || []).filter(t => t && t.url && urlOf(t.url));
+  paintTabsCount();
+  if(tabsOn) renderTabs();
+}
+function paintTabsCount(){
+  const c = $('#tabsCnt');
+  const n = bridge ? openTabs.length : 0;
+  c.textContent = n;
+  c.hidden = !n || tabsOn;
+}
+async function refreshTabs(){
+  if(!bridge) return;
+  tabsAsked = true;
+  const items = await askExt('tabs', {}, 8000);
+  if(items) setOpenTabs(items);
+}
+function toggleTabs(on){
+  tabsOn = on === undefined ? !tabsOn : !!on;
+  $('#tabs').hidden = !tabsOn;
+  $('#tabsBtn').classList.toggle('is-on', tabsOn);
+  $('#tabsBtn').setAttribute('aria-expanded', String(tabsOn));
+  paintTabsCount();
+  saveUi();
+  if(tabsOn){ renderTabs(); refreshTabs(); }
+}
+function tabRow(t){
+  const ic = favIcon(t.url);
+  const title = t.title || titleFromUrl(t.url);
+  return '<div class="tab-item" data-tid="' + t.id + '" title="' + esc(title) + '">' +
+    '<i class="fav' + (ic.ready ? ' has-icon' : '') + '" style="background:' + favOf(t.url).color + '">' +
+      esc(favOf(t.url).letter) + ic.img + '</i>' +
+    '<span class="tab-txt"><span class="tab-title">' + esc(title) + '</span>' +
+      '<span class="tab-host">' + esc(hostOf(t.url)) + '</span></span>' +
+    '<button class="take" data-act="take" title="Забрать в «' + esc(folderLabel(ui.at)) + '»" ' +
+      'aria-label="Забрать в «' + esc(folderLabel(ui.at)) + '»">' + ICO.plus + '</button></div>';
+}
+function renderTabs(){
+  const body = $('#tabsBody'), n = $('#tabsN'), foot = $('#tabsFoot');
+  $('#tabs').querySelector('[data-act="tabs-refresh"]').innerHTML = ICO.sync;
+  $('#tabs').querySelector('[data-act="tabs-hide"]').innerHTML = ICO.x;
+  n.textContent = openTabs.length;
+  if(!bridge){
+    foot.hidden = true;
+    body.innerHTML = '<div class="tabs-note"><b>Нужно расширение.</b> Список открытых вкладок ' +
+      'браузер странице не показывает — его приносит расширение ZAKLADKA. ' +
+      'Как поставить, написано в меню <b>⋯</b> → «Как складывать вкладки».</div>';
+    return;
+  }
+  if(!openTabs.length){
+    foot.hidden = true;
+    body.innerHTML = '<div class="tabs-note">' +
+      (tabsAsked ? 'Кроме этой вкладки в окне ничего не открыто.' : 'Спрашиваю у расширения…') + '</div>';
+    return;
+  }
+  foot.hidden = false;
+  body.innerHTML = openTabs.map(tabRow).join('');
+  foot.querySelector('[data-act="tabs-all"]').textContent =
+    'Забрать все (' + openTabs.length + ')';
+}
+const tabById = tid => openTabs.find(t => String(t.id) === String(tid)) || null;
+
+/* Забрали вкладку — закрываем её в браузере. Если добавить не вышло
+   (передумали на вопросе про дубликат), вкладка остаётся на месте. */
+async function takeTabs(tids, folder, place){
+  const list = tids.map(tabById).filter(Boolean);
+  if(!list.length) return;
+  const items = list.map(t => ({ url: urlOf(t.url), title: t.title || '' })).filter(x => x.url);
+  const made = await addChecked(items, folder === undefined ? ui.at : folder);
+  if(!made.length) return;
+  if(place && made.length === 1) placeAt(made[0].id, place);
+  const ids = list.map(t => t.id);
+  openTabs = openTabs.filter(t => !ids.includes(t.id));
+  renderTabs(); paintTabsCount();
+  await askExt('close', { ids }, 8000);
+  toast('Забрано: ' + made.length + ' ' + plural(made.length,'вкладка','вкладки','вкладок') +
+        ' → «' + folderLabel(folder === undefined ? ui.at : folder) + '»');
+  finishAdd(made);
+  refreshTabs();
+}
+/* Ставим только что добавленную ссылку туда, куда её уронили. */
+function placeAt(id, t){
+  if(!t) return;
+  if(t.type === 'into' || t.type === 'end') return;
+  const tl = state.links.find(x => x.id === t.id);
+  if(tl) moveLinkRel(id, tl.folder || null, t.id, t.type === 'after');
+}
+
+$('#tabsBtn').onclick = () => toggleTabs();
+$('#tabs').addEventListener('click', e => {
+  const act = e.target.closest('[data-act]');
+  if(!act) return;
+  const k = act.dataset.act;
+  if(k === 'tabs-hide') return toggleTabs(false);
+  if(k === 'tabs-refresh') return refreshTabs();
+  if(k === 'tabs-all') return takeTabs(openTabs.map(t => t.id), ui.at);
+  if(k === 'take'){
+    const row = act.closest('.tab-item');
+    if(row) takeTabs([row.dataset.tid], ui.at);
+  }
+});
+
+/* ─────────────────────── дубликаты ───────────────────────
+   Один и тот же адрес пишут по-разному: со слэшем в конце, с www, с якорем.
+   Сравниваем приведённые к общему виду, иначе защита ловила бы только
+   совпадения символ в символ. */
+function normUrl(u){
+  try{
+    const x = new URL(u);
+    return x.hostname.replace(/^www\./i,'').toLowerCase() +
+           x.pathname.replace(/\/+$/,'').toLowerCase() + (x.search || '');
+  }catch(e){ return String(u || '').trim().toLowerCase(); }
+}
+const dupOf = url => { const k = normUrl(url); return state.links.find(l => normUrl(l.url) === k) || null; };
+
+async function addChecked(items, folder){
+  const fresh = [], dups = [], seen = new Set();
+  for(const it of items){
+    const k = normUrl(it.url);
+    if(seen.has(k)) continue;              /* повтор внутри самой пачки */
+    seen.add(k);
+    (dupOf(it.url) ? dups : fresh).push(it);
+  }
+  if(dups.length){
+    const one = dups.length === 1 ? dupOf(dups[0].url) : null;
+    const ok = await ask(
+      dups.length === 1 ? 'Вижу, что уже есть такая ссылка' : 'Вижу, что такие ссылки уже есть',
+      one ? '«' + (one.title || hostOf(one.url)) + '» лежит в «' + folderLabel(one.folder) + '». Добавляем снова?'
+          : 'Уже сохранено: ' + dups.length + ' из ' + (dups.length + fresh.length) + '. Добавляем снова?',
+      'Добавить снова');
+    if(ok) fresh.push(...dups);
+    else if(!fresh.length){ toast('Уже есть — ничего не добавил'); return []; }
+  }
+  return addLinks(fresh, folder);
+}
+
+/* Разбор того, что уже накопилось. */
+function dupeGroups(){
+  const by = new Map();
+  for(const l of state.links){
+    const k = normUrl(l.url);
+    if(!by.has(k)) by.set(k, []);
+    by.get(k).push(l);
+  }
+  return [...by.values()].filter(g => g.length > 1);
+}
+async function dupeSheet(){
+  const groups = dupeGroups();
+  if(!groups.length) return toast('Повторов нет');
+  const extra = groups.reduce((n,g) => n + g.length - 1, 0);
+  const rows = groups.slice(0, 40).map(g => {
+    const first = g[0];
+    return '<li><b>' + esc(first.title || hostOf(first.url)) + '</b><br>' +
+      '<span class="mono" style="font-size:11px;color:var(--muted)">' + esc(hostOf(first.url)) + '</span> — ' +
+      g.length + ' ' + plural(g.length,'копия','копии','копий') + ': ' +
+      esc(g.map(l => folderLabel(l.folder)).join(', ')) + '</li>';
+  }).join('');
+  if(!await ask('Повторы: ' + groups.length,
+      'Лишних копий ' + extra + '. Оставлю по одной — самой старой, остальные уедут в корзину.',
+      'Убрать повторы')) return;
+  const drop = [];
+  for(const g of groups){
+    const keep = g.slice().sort((a,b) => (a.added || 0) - (b.added || 0))[0];
+    for(const l of g) if(l.id !== keep.id) drop.push(l);
+  }
+  pushUndo();
+  toTrash(drop, 'повтор');
+  const ids = new Set(drop.map(l => l.id));
+  state.links = state.links.filter(l => !ids.has(l.id));
+  commit();
+  toast('Убрано повторов: ' + drop.length + ' — лежат в корзине');
+}
+
+/* ─────────────────────── корзина ───────────────────────
+   Отмена живёт до перезагрузки страницы, а копии у сервиса нет — поэтому
+   удалённое лежит тридцать дней, а не исчезает. */
+const TRASH_DAYS = 30, TRASH_MAX = 600;
+function toTrash(links, why){
+  if(!Array.isArray(state.trash)) state.trash = [];
+  for(const l of links)
+    state.trash.push({ id:l.id, url:l.url, title:l.title || '', folderName:folderLabel(l.folder),
+                       at:Date.now(), why:why || '' });
+  while(state.trash.length > TRASH_MAX) state.trash.shift();
+}
+function purgeTrash(){
+  if(!Array.isArray(state.trash)){ state.trash = []; return 0; }
+  const edge = Date.now() - TRASH_DAYS * 864e5, was = state.trash.length;
+  state.trash = state.trash.filter(t => (t.at || 0) > edge);
+  return was - state.trash.length;
+}
+const trashCount = () => (state.trash || []).length;
+function folderByName(name){
+  if(!name || name === 'Без папки') return null;
+  const f = state.folders.find(x => x.name === name);
+  if(f) return f.id;
+  const nf = { id:uid(), name, parent:null, order:kidsOf(null).length, color:state.folders.length % 6, open:true };
+  state.folders.push(nf);
+  return nf.id;
+}
+function restoreTrash(ids){
+  const set = new Set(ids), back = (state.trash || []).filter(t => set.has(t.id));
+  if(!back.length) return 0;
+  pushUndo();
+  for(const t of back){
+    const fid = folderByName(t.folderName);
+    state.links.push({ id:uid(), folder:fid, url:t.url, title:t.title || titleFromUrl(t.url),
+                       order:linksIn(fid).length, added:Date.now() });
+    if(fid){ const f = byId(fid); if(f) f.open = true; } else ui.rootOpen = true;
+  }
+  state.trash = state.trash.filter(t => !set.has(t.id));
+  commit();
+  return back.length;
+}
+const dayTxt = ms => {
+  const d = Math.floor((Date.now() - ms) / 864e5);
+  return d <= 0 ? 'сегодня' : d === 1 ? 'вчера' : d + ' ' + plural(d,'день','дня','дней') + ' назад';
+};
+function trashSheet(){
+  const list = (state.trash || []).slice().reverse();
+  if(!list.length)
+    return openSheet('<h2>Корзина пуста</h2><p class="hint">Удалённые ссылки лежат здесь ' +
+      TRASH_DAYS + ' дней, потом исчезают сами.</p>' +
+      '<div class="sheet-foot"><button class="btn btn-ink" data-close>Понятно</button></div>');
+  const rows = list.map(t =>
+    '<li data-tid="' + esc(t.id) + '"><b>' + esc(t.title || hostOf(t.url)) + '</b>' +
+    '<br><span class="mono" style="font-size:11px;color:var(--muted)">' + esc(hostOf(t.url)) +
+    ' · из «' + esc(t.folderName) + '» · ' + dayTxt(t.at) + '</span> ' +
+    '<button class="btn" data-act="back" style="height:24px;padding:0 9px;font-size:11.5px">Вернуть</button></li>'
+  ).join('');
+  openSheet('<h2>Корзина</h2>' +
+    '<p class="hint">Здесь ' + list.length + ' ' + plural(list.length,'ссылка','ссылки','ссылок') +
+    '. Каждая исчезнет сама через ' + TRASH_DAYS + ' дней после удаления.</p>' +
+    '<ul style="max-height:46vh;overflow:auto">' + rows + '</ul>' +
+    '<div class="sheet-foot"><button class="btn btn-danger" data-act="wipe">Очистить</button>' +
+    '<button class="btn" data-act="all">Вернуть всё</button>' +
+    '<button class="btn btn-ink" data-close>Закрыть</button></div>',
+    sh => {
+      sh.addEventListener('click', async e => {
+        const act = e.target.closest('[data-act]'); if(!act) return;
+        const k = act.dataset.act;
+        if(k === 'back'){
+          const li = act.closest('li');
+          const n = restoreTrash([li.dataset.tid]);
+          li.remove();
+          if(n) toast('Вернул на место');
+          if(!sh.querySelector('li')) closeSheet();
+          return;
+        }
+        if(k === 'all'){ const n = restoreTrash(list.map(t => t.id)); closeSheet(); toast('Вернул: ' + n); return; }
+        if(k === 'wipe'){
+          if(!await ask('Очистить корзину?', 'Из неё уже ничего не вернуть.', 'Очистить', true)) return;
+          pushUndo(); state.trash = []; commit(); toast('Корзина очищена');
+        }
+      });
+    });
+}
+
+/* ─────────────────────── живые ли ссылки ───────────────────────
+   Страница чужие адреса проверить не может — этим занимается расширение,
+   и только если ему выдано разрешение на доступ к сайтам. */
+let checking = false;
+async function checkAlive(){
+  if(checking) return;
+  if(!bridge) return toast('Нужно расширение: страница сама чужие адреса проверить не может');
+  const urls = [...new Set(state.links.map(l => l.url))];
+  if(!urls.length) return toast('Проверять нечего');
+  checking = true;
+  toast('Проверяю ' + urls.length + ' ' + plural(urls.length,'адрес','адреса','адресов') + '…');
+  const r = await askExt('alive', { urls: urls.slice(0, 300) }, 180000);
+  checking = false;
+  if(!r) return toast('Расширение не ответило');
+  if(r.denied) return toast('Расширению нужно разрешение на доступ к сайтам — выдайте его в его окне');
+  const dead = new Set(r.items.filter(x => x.dead).map(x => x.url));
+  pushUndo();
+  state.links.forEach(l => { if(dead.has(l.url)) l.dead = 1; else delete l.dead; });
+  commit();
+  if(!dead.size) return toast('Все ссылки отвечают');
+  const n = state.links.filter(l => l.dead).length;
+  if(await ask('Не отвечают: ' + n,
+      'Страницы по этим адресам не открываются. Убрать их в корзину? Оттуда можно вернуть в течение ' +
+      TRASH_DAYS + ' дней.', 'Убрать в корзину')){
+    const drop = state.links.filter(l => l.dead);
+    pushUndo();
+    toTrash(drop, 'не отвечает');
+    const ids = new Set(drop.map(l => l.id));
+    state.links = state.links.filter(l => !ids.has(l.id));
+    commit();
+    toast('Убрано: ' + drop.length);
+  } else toast('Помечены в списке');
+}
+
+/* ─────────────────────── запасная копия ───────────────────────
+   localStorage живёт ровно до «очистить данные сайта». Расширение — другое
+   хранилище, чистка страницы его не трогает; чаще раза в сутки не пишем. */
+function backupPayload(){
+  return JSON.stringify({ app:'zakladka', v:1, exported:new Date().toISOString(),
+                          folders:state.folders, links:state.links });
+}
+async function backupNow(force){
+  if(!bridge) return null;
+  return askExt('backup', { json:backupPayload(), links:state.links.length, force:!!force }, 30000);
+}
+let greeted = false;
+function onBridge(){
+  paintTabsCount();
+  if(tabsOn){ renderTabs(); refreshTabs(); }   /* заменяем «нужно расширение» списком */
+  if(greeted) return;
+  greeted = true;
+  refreshTabs();
+  setTimeout(() => backupNow(false), 2500);   /* не мешаем первой отрисовке */
+}
+async function backupSheet(){
+  if(!bridge) return toast('Нужно расширение — копию хранит оно');
+  const r = await backupNow(true);
+  if(!r) return toast('Расширение не ответило');
+  toast(r.saved ? 'Копия сохранена в расширении' : 'Не удалось сохранить копию');
+}
+
 /* ─────────────────────── клики ─────────────────────── */
 function setView(v){
   ui.view = v;
@@ -1387,8 +1822,13 @@ $('#moreBtn').onclick = e => {
     { k:'help', label:'Как складывать вкладки', icon:ICO.ext, run:helpSheet },
     { k:'fold', label:'Свернуть или раскрыть всё', icon:ICO.folder, run:foldAll },
     '-',
+    { k:'trash', label:'Корзина' + (trashCount() ? ' (' + trashCount() + ')' : ''), icon:ICO.trash, run:trashSheet },
+    { k:'dupes', label:'Найти повторы', icon:ICO.copy, run:dupeSheet },
+    { k:'alive', label:'Проверить, живы ли ссылки', icon:ICO.shield, run:checkAlive },
+    '-',
     { k:'exp', label:'Выгрузить в JSON', icon:ICO.copy, run:exportJson },
     { k:'imp', label:'Загрузить из JSON', icon:ICO.folder, run:()=>$('#importFile').click() },
+    { k:'bak', label:'Копия в расширении', icon:ICO.shield, run:backupSheet },
     '-',
     { k:'icons', label:iconMode ? 'Выключить значки сайтов' : 'Включить значки сайтов', icon:ICO.copy,
       run:()=>{ iconMode = !iconMode; lsWrite(LS_ICONS, iconMode); render(); } },
@@ -1454,7 +1894,7 @@ function clearMarks(){
     .forEach(el => el.classList.remove('drop-before','drop-after','drop-in','drop-end'));
 }
 function reapplyLift(){
-  if(!dnd || !dnd.armed) return;
+  if(!dnd || !dnd.armed || dnd.kind === 'tab') return;
   const el = dnd.kind === 'link'
     ? document.querySelector('.card[data-id="' + dnd.id + '"]')
     : document.querySelector('.sec[data-fid="' + dnd.id + '"] > .sec-head');
@@ -1464,9 +1904,11 @@ document.addEventListener('pointerdown', e => {
   if(e.button > 0 || editing || modal.classList.contains('on')) return;
   const cardEl = e.target.closest('.card');
   const head = e.target.closest('.sec-head');
-  const src = cardEl || (head && head.dataset.fid ? head : null);
+  const tabEl = e.target.closest('.tab-item');
+  const src = cardEl || tabEl || (head && head.dataset.fid ? head : null);
   if(!src || e.target.closest('button,[contenteditable]')) return;
-  dnd = { kind:cardEl ? 'link' : 'folder', id:cardEl ? cardEl.dataset.id : head.dataset.fid, el:src,
+  dnd = { kind:cardEl ? 'link' : tabEl ? 'tab' : 'folder',
+          id:cardEl ? cardEl.dataset.id : tabEl ? tabEl.dataset.tid : head.dataset.fid, el:src,
           x:e.clientX, y:e.clientY, pid:e.pointerId, armed:false, touch:e.pointerType === 'touch', drop:null, hold:null };
   if(dnd.touch) dnd.hold = setTimeout(() => { if(dnd && !dnd.armed) arm(); }, 320);
   window.addEventListener('pointermove', onMove, { passive:false });
@@ -1477,7 +1919,7 @@ function arm(){
   dnd.armed = true;
   const r = dnd.el.getBoundingClientRect();
   const g = dnd.el.cloneNode(true);
-  g.className = (dnd.kind === 'link' ? 'card ghost' : 'sec-head ghost g-head') +
+  g.className = (dnd.kind === 'link' ? 'card ghost' : dnd.kind === 'tab' ? 'card ghost g-tab' : 'sec-head ghost g-head') +
                 (ui.view === 'list' && dnd.kind === 'link' ? ' g-list' : '');
   g.style.width = r.width + 'px';
   dnd.dx = dnd.x - r.left; dnd.dy = dnd.y - r.top;
@@ -1523,6 +1965,8 @@ function hitTest(x, y){
   const el = document.elementFromPoint(x, y);
   dnd.ghost.style.display = '';
   if(!el){ hoverOpen(undefined); return; }
+  /* сама полоса вкладок целью не бывает: ни забрать в неё, ни вернуть */
+  if(el.closest('#tabs')){ hoverOpen(undefined); return; }
 
   const head = el.closest('.sec-head');
   if(head){
@@ -1541,7 +1985,7 @@ function hitTest(x, y){
     return;
   }
   hoverOpen(undefined);
-  if(dnd.kind !== 'link'){
+  if(dnd.kind === 'folder'){
     const sec = el.closest('.sec');
     const fid = sec ? (sec.dataset.fid || null) : null;
     if(fid === dnd.id || (fid && isAncestor(dnd.id, fid))) return;
@@ -1550,7 +1994,7 @@ function hitTest(x, y){
     return;
   }
   const cardEl = el.closest('.card');
-  if(cardEl && cardEl.dataset.id !== dnd.id){
+  if(cardEl && (dnd.kind === 'tab' || cardEl.dataset.id !== dnd.id)){
     const r = cardEl.getBoundingClientRect();
     const after = ui.view === 'list' ? y > r.top + r.height/2 : x > r.left + r.width/2;
     cardEl.classList.add(after ? 'drop-after' : 'drop-before');
@@ -1565,6 +2009,7 @@ function hitTest(x, y){
     if(!sec) markRoot();
   }
 }
+const folderOfLink = id => { const l = state.links.find(x => x.id === id); return l ? (l.folder || null) : null; };
 function markRoot(){ const b = document.querySelector('.newf'); if(b) b.classList.add('drop-end'); }
 function edgeScroll(y){
   const w = $('#wrap'), r = w.getBoundingClientRect();
@@ -1579,6 +2024,11 @@ function onUp(e){
 }
 function applyDrop(d){
   const t = d.drop; if(!t) return;
+  if(d.kind === 'tab'){
+    const fid = t.type === 'into' || t.type === 'end' ? t.id : folderOfLink(t.id);
+    takeTabs([d.id], fid, t);
+    return;
+  }
   if(d.kind === 'folder'){
     if(t.type === 'into') moveFolder(d.id, t.id, null);
     else{ const tf = byId(t.id); if(tf) moveFolderRel(d.id, tf.parent || null, t.id, t.type === 'fafter'); }
@@ -1638,9 +2088,11 @@ document.addEventListener('drop', e => {
   if(dnd) return;
   const items = extractFromDT(e.dataTransfer);
   if(!items.length) return toast('В этом перетаскивании не нашлось адреса');
-  const made = addLinks(items, fid);
-  toast('Сохранено: ' + items.length + ' ' + plural(items.length,'ссылка','ссылки','ссылок') + ' → «' + folderLabel(fid) + '»');
-  finishAdd(made);
+  addChecked(items, fid).then(made => {
+    if(!made.length) return;
+    toast('Сохранено: ' + made.length + ' ' + plural(made.length,'ссылка','ссылки','ссылок') + ' → «' + folderLabel(fid) + '»');
+    finishAdd(made);
+  });
 });
 function extractFromDT(dt){
   if(!dt) return [];
@@ -1699,11 +2151,13 @@ document.addEventListener('paste', e => {
   e.preventDefault();
   if(items.length > 1) return addSheet(text.trim());
   const where = folderLabel(ui.at);
-  const made = addLinks(items, ui.at);
-  const l = state.links.find(x => x.id === made[0].id);
-  const name = (l ? l.title : hostOf(items[0].url)) || '';
-  toast((name.length > 38 ? name.slice(0,37) + '…' : name) + ' → «' + where + '»');
-  finishAdd(made);
+  addChecked(items, ui.at).then(made => {
+    if(!made.length) return;
+    const l = state.links.find(x => x.id === made[0].id);
+    const name = (l ? l.title : hostOf(items[0].url)) || '';
+    toast((name.length > 38 ? name.slice(0,37) + '…' : name) + ' → «' + where + '»');
+    finishAdd(made);
+  });
 });
 addEventListener('keydown', e => {
   if(editing) return;
