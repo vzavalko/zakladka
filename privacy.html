@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ZAKLADKA — конфиденциальность</title>
+<meta name="description" content="Политика конфиденциальности сервиса ZAKLADKA и расширения Chrome ZAKLADKA.">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<!-- Страница для магазина Chrome: адрес политики конфиденциальности расширения.
+     Всё, что здесь сказано, должно совпадать с тем, что делает код, и с
+     формой раскрытия данных в магазине — иначе расширение отклонят. -->
+<style>
+:root{--ink:#0F0F0F;--bg:#fff;--muted:rgba(15,15,15,.58);--line:rgba(15,15,15,.1);--accent:#FA0CF7;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--ink:#E6ECF2;--bg:#0E1621;--muted:#A2B0BF;--line:rgba(140,172,204,.14);color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.65 system-ui,-apple-system,'Segoe UI',sans-serif;-webkit-font-smoothing:antialiased}
+main{max-width:720px;margin:0 auto;padding:48px 20px 80px}
+.mark{width:40px;height:40px;border-radius:12px;background:var(--accent);display:grid;place-items:center;margin-bottom:18px}
+.mark svg{width:22px;height:22px;color:#fff}
+h1{font-size:28px;line-height:1.2;letter-spacing:-.02em;margin:0 0 6px}
+.date{color:var(--muted);font-size:13px;margin:0 0 28px}
+h2{font-size:18px;letter-spacing:-.01em;margin:34px 0 8px;padding-top:22px;border-top:1px solid var(--line)}
+p,li{color:var(--ink)}
+ul{padding-left:20px}
+li{margin-bottom:6px}
+.muted{color:var(--muted)}
+a{color:var(--accent)}
+code{font:13px ui-monospace,Menlo,monospace}
+</style>
+</head>
+<body>
+<main>
+  <div class="mark"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M1.9 12.6V3.4h4.2l1.4 1.9h6.6v7.3a.8.8 0 0 1-.8.8H2.7a.8.8 0 0 1-.8-.8Z"/></svg></div>
+  <h1>Политика конфиденциальности ZAKLADKA</h1>
+  <p class="date">Действует с 24 сентября 2026 года. Относится к сервису
+  <a href="https://vzavalko.github.io/zakladka/">vzavalko.github.io/zakladka</a> и к расширению Chrome «ZAKLADKA».</p>
+
+  <p><b>Коротко:</b> у ZAKLADKA нет сервера и нет аккаунтов. Ваши ссылки и папки
+  хранятся только в вашем браузере, никуда не отправляются, не продаются и не
+  передаются третьим лицам. Мы не собираем аналитику и не ставим счётчиков.</p>
+
+  <h2>Что хранится и где</h2>
+  <ul>
+    <li><b>Ссылки, названия, папки, корзина, настройки вида и тема</b> — в хранилище
+      браузера на странице ZAKLADKA. Эти данные есть только на вашем устройстве.</li>
+    <li><b>Расширение</b> хранит в своём хранилище браузера: свои настройки, список
+      папок и адресов для окошка у значка (чтобы показать выбор папки и
+      предупредить о повторе), ссылки, сохранённые, пока страница ZAKLADKA
+      закрыта, и до пяти запасных копий ваших ссылок — на случай, если данные
+      сайта будут очищены.</li>
+    <li>Ничего из этого не синхронизируется между устройствами и не
+      отправляется ни нам, ни кому-либо ещё.</li>
+  </ul>
+
+  <h2>Что расширение видит</h2>
+  <ul>
+    <li><b>Адреса и названия открытых вкладок</b> — чтобы сохранить вкладку в папку,
+      показать список открытых вкладок на странице ZAKLADKA и отметить значком
+      страницы, которые уже сохранены. Эти данные передаются только странице
+      ZAKLADKA в этом же браузере.</li>
+    <li>Содержимое страниц, которые вы просматриваете, расширение не читает.</li>
+  </ul>
+
+  <h2>Какие запросы уходят в сеть</h2>
+  <p>Только по вашему действию и только ради названий и проверки ссылок, которые
+  вы сами сохранили:</p>
+  <ul>
+    <li><b>Название страницы.</b> Если вы разрешили «узнавать названия по адресу»,
+      расширение запрашивает сохранённый адрес у самого сайта и берёт из ответа
+      только заголовок. Для YouTube, Vimeo, SoundCloud, Flickr и TED название
+      спрашивается у открытого сервиса этого же сайта (oEmbed) — ему передаётся
+      адрес ссылки. Запросы идут без ваших cookie, то есть без входа в аккаунты.</li>
+    <li><b>Проверка ссылок.</b> По команде «Проверить, живы ли ссылки» расширение
+      отправляет короткий запрос на каждый сохранённый адрес и смотрит только на
+      код ответа.</li>
+    <li><b>Значки сайтов</b> страница ZAKLADKA загружает с
+      <code>icons.duckduckgo.com</code> или с самого сайта — передаётся только
+      имя домена.</li>
+    <li><b>Проверка обновлений.</b> Страница ZAKLADKA запрашивает номер свежей версии
+      расширения с GitHub — без каких-либо ваших данных.</li>
+  </ul>
+  <p class="muted">Эти сайты видят обычный запрос из вашего браузера (как при
+  переходе по ссылке) и работают по своим правилам конфиденциальности.</p>
+
+  <h2>Передача третьим лицам</h2>
+  <p>Нет. Данные не продаются, не передаются и не используются для рекламы,
+  оценки кредитоспособности или чего-либо, кроме работы самой ZAKLADKA.</p>
+
+  <h2>Как удалить данные</h2>
+  <ul>
+    <li>Ссылки удаляются в самой ZAKLADKA; корзина очищается сама через 30 дней.</li>
+    <li>Удаление расширения стирает всё, что хранило расширение.</li>
+    <li>Очистка данных сайта <code>vzavalko.github.io</code> в настройках Chrome
+      стирает ссылки со страницы. Перед этим можно выгрузить их файлом:
+      меню <b>⋯</b> → «Выгрузить в JSON».</li>
+  </ul>
+
+  <h2>Изменения</h2>
+  <p>Если что-то в обращении с данными изменится, эта страница будет обновлена,
+  а дата вверху — исправлена.</p>
+
+  <h2>Связь</h2>
+  <p>Вопросы о конфиденциальности —
+  <a href="https://github.com/vzavalko/zakladka-extension/issues">github.com/vzavalko/zakladka-extension/issues</a>.</p>
+</main>
+</body>
+</html>
