@@ -790,6 +790,7 @@ function pushUndo(){ undoStack.push(snapshot()); if(undoStack.length > 40) undoS
    на диск отделена от отрисовки. */
 function persist(){
   lsWrite(LS, state);
+  sendSnapshot();
   setSync('busy');
   clearTimeout(saveTimer);
   saveTimer = setTimeout(() => setSync(lsWrite(LS, state) === false ? 'err' : 'ok'), 220);
@@ -1076,14 +1077,41 @@ addEventListener('message', e => {
       .map(x => ({ url: urlOf(x && x.url), title: (x && x.title) || '' }))
       .filter(x => x.url);
     if(!items.length) return;
-    const where = folderLabel(ui.at);
-    addChecked(items, ui.at).then(made => {
+    /* Расширение называет папку само. '@at' и отсутствие поля значат «куда
+       сейчас складываю»: папку могли переименовать или удалить, пока письмо
+       шло, — поэтому проверяем, что она ещё есть. */
+    const to = (d.folder === undefined || d.folder === '@at') ? ui.at
+             : (byId(d.folder) ? d.folder : null);
+    /* Когда папку назвали снаружи, активную не трогаем: человек её выбирал
+       здесь, а сохранял из попапа мимоходом. */
+    const keepAt = (d.folder === undefined || d.folder === '@at') ? undefined : (ui.at || null);
+    const where = folderLabel(to);
+    addChecked(items, to).then(made => {
       if(!made.length) return;
+      if(keepAt !== undefined && (ui.at || null) !== keepAt){ ui.at = keepAt; markTarget(); saveUi(); }
       toast('Из браузера: ' + made.length + ' ' + plural(made.length,'ссылка','ссылки','ссылок') + ' → «' + where + '»');
       finishAdd(made);
     });
   }
 });
+/* ── снимок для попапа расширения ──
+   Попап показывает список папок и предупреждает о повторе, но заглянуть в
+   localStorage страницы он не может: у него свой origin. Поэтому после каждой
+   правки отдаём короткую выжимку — папки, активную и нормализованные адреса.
+   var, а не let: persist() зовут и до того, как выполнится этот кусок. */
+var snapTimer = null;
+function sendSnapshot(){ clearTimeout(snapTimer); snapTimer = setTimeout(snapshotNow, 400); }
+function snapshotNow(){
+  if(!bridge) return;
+  const folders = [];
+  const walk = (parent, depth) => {
+    for(const f of kidsOf(parent)){ folders.push({ id:f.id, name:f.name, depth }); walk(f.id, depth + 1); }
+  };
+  walk(null, 0);
+  const urls = {};
+  for(const l of state.links) urls[normUrl(l.url)] = l.folder || '';
+  postMessage(signed('snapshot', { folders, at: ui.at || null, urls }), location.origin);
+}
 const REPLY = {
   resolved:    d => Array.isArray(d.items) ? d.items : [],
   'tabs-list': d => Array.isArray(d.items) ? d.items : [],
@@ -1546,7 +1574,7 @@ function helpSheet(){
     '<li><b>Показывает открытые вкладки.</b> Кнопка с книгой наверху. Перетащите вкладку в папку — ссылка сохранится, а вкладка закроется.</li>' +
     '<li><b>Узнаёт настоящие названия страниц.</b> Без него название собирается из самого адреса.</li>' +
     '<li><b>Хранит запасную копию</b> ссылок у себя — она переживёт очистку данных браузера.</li></ul>' +
-    '<p class="hint"><kbd class="mono">⌘⇧K</kbd> — список вкладок, <kbd class="mono">⌘⇧S</kbd> — убрать текущую вкладку.</p>' +
+    '<p class="hint"><kbd class="mono">⌘⇧S</kbd> — сохранить текущую вкладку и закрыть её, <kbd class="mono">⌘⇧K</kbd> — окно расширения.</p>' +
     '<p class="hint" style="margin-bottom:6px"><b>Как поставить</b></p>' +
     '<ul><li>Скачать папку: <span class="mono">github.com/vzavalko/zakladka-extension</span></li>' +
     '<li>Открыть <span class="mono">chrome://extensions</span>, включить «Режим разработчика».</li>' +
@@ -1915,6 +1943,7 @@ async function backupNow(force){
 }
 let greeted = false;
 function onBridge(){
+  snapshotNow();                                /* попапу нужны папки сразу */
   if(tabsOn){ renderTabs(); refreshTabs(); }   /* заменяем «нужно расширение» списком */
   if(greeted) return;
   greeted = true;
@@ -1998,6 +2027,7 @@ $('#col').addEventListener('click', e => {
   if(head && !e.target.closest('[contenteditable]')){
     ui.at = head.dataset.fid || null;
     markTarget();
+    sendSnapshot();
     toggleFolder(head.dataset.fid || null);
   }
 });
