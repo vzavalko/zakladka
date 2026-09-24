@@ -437,6 +437,12 @@ body.dragging,body.dragging *{cursor:grabbing!important;user-select:none}
   border:1px solid var(--line);border-radius:var(--r);background:var(--surf);font-size:12.5px;color:var(--text-2);
 }
 .banner .btn{margin-left:auto;height:29px;background:var(--paper)}
+.banner .btn + .btn{margin-left:0}
+.banner .btn-primary{background:var(--accent)}
+.banner b{color:var(--text);font-weight:600}
+.steps{margin:0 0 14px;padding-left:20px;font-size:13px;line-height:1.7;color:var(--text-2)}
+.steps li{margin-bottom:4px}
+.steps b{color:var(--text);font-weight:600}
 
 .veil{position:fixed;inset:0;z-index:100;display:none;place-items:center;pointer-events:none;
   background:color-mix(in srgb,var(--bg) 72%,transparent);backdrop-filter:blur(4px);padding:20px}
@@ -868,7 +874,7 @@ const ICO = {
 };
 
 /* ─────────────────────── отрисовка ─────────────────────── */
-const saveUi = () => lsWrite(LS_UI, { view:ui.view, rootOpen:ui.rootOpen, at:ui.at, tabs:tabsOn, theme:ui.theme });
+const saveUi = () => lsWrite(LS_UI, { view:ui.view, rootOpen:ui.rootOpen, at:ui.at, tabs:tabsOn, theme:ui.theme, extSkip:ui.extSkip });
 function render(){ renderCol(); if(tabsOn) renderTabs(); reapplyLift(); saveUi(); }
 
 const searchHits = () => {
@@ -884,6 +890,10 @@ function renderCol(){
 
   const m = ui.q ? new Set(searchHits().map(l => l.id)) : null;
   let h = '';
+  if(!ui.q && extOld())
+    h += '<div class="banner"><span><b>Расширение устарело.</b> У вас ' + esc(extVersion) + ', свежая — ' + esc(extLatest) + '.</span>' +
+         '<button class="btn btn-ghost" data-act="ext-later">Позже</button>' +
+         '<button class="btn btn-primary" data-act="ext-update">Как обновить</button></div>';
   if(!ui.q && state.links.some(l => l.demo))
     h += '<div class="banner"><span>Папки и ссылки — пример, чтобы было видно устройство.</span>' +
          '<button class="btn" data-act="clear-demo">Убрать пример</button></div>';
@@ -1096,7 +1106,7 @@ const signed = (kind, rest) => Object.assign({ [MARK]:kind, [MARK_OLD]:kind }, r
 addEventListener('message', e => {
   if(e.source !== window || !e.data || typeof e.data !== 'object') return;
   const d = e.data, kind = d[MARK] || d[MARK_OLD];
-  if(kind === 'hello'){ bridge = true; setSync('ok'); onBridge(); return; }
+  if(kind === 'hello'){ bridge = true; extVersion = String(d.version || '0'); setSync('ok'); onBridge(); checkExtUpdate(); return; }
   /* ответы на наши вопросы разбираем по одному правилу на вид ответа */
   const take = REPLY[kind];
   if(take){
@@ -1999,6 +2009,59 @@ function onBridge(){
   refreshTabs();
   setTimeout(() => backupNow(false), 2500);   /* не мешаем первой отрисовке */
 }
+/* ── свежая версия расширения ──
+   Расширение ставят распакованной папкой, а такие Chrome не обновляет никогда.
+   Зато страница обновляется сама: расширение в «hello» называет свою версию,
+   мы сверяем её с манифестом на GitHub и, если отстала, показываем плашку.
+   Так до человека доходит весть даже от совсем старого расширения.
+   Когда расширение появится в магазине Chrome, впишите адрес в EXT_STORE —
+   лист начнёт вести туда, и дальше обновления пойдут сами. */
+const EXT_MANIFEST = 'https://raw.githubusercontent.com/vzavalko/zakladka-extension/main/manifest.json';
+const EXT_ZIP = 'https://github.com/vzavalko/zakladka-extension/archive/refs/heads/main.zip';
+const EXT_STORE = '';
+var extVersion = null, extLatest = null;
+const verNum = v => String(v || '0').split('.').map(n => parseInt(n, 10) || 0);
+function verLess(a, b){
+  const x = verNum(a), y = verNum(b);
+  for(let i = 0; i < Math.max(x.length, y.length); i++){
+    if((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) < (y[i] || 0);
+  }
+  return false;
+}
+const extOld = () => !!(extVersion && extLatest && verLess(extVersion, extLatest) && ui.extSkip !== extLatest);
+let extChecked = false;
+async function checkExtUpdate(){
+  if(extChecked) return;
+  extChecked = true;
+  try{
+    const r = await fetch(EXT_MANIFEST, { cache:'no-cache' });
+    if(!r.ok) return;
+    extLatest = String((await r.json()).version || '') || null;
+  }catch(e){ return; }   /* нет сети — промолчим, спросим при следующем открытии */
+  if(extOld()) renderCol();
+}
+function extUpdateSheet(){
+  const store = EXT_STORE
+    ? '<p class="hint">Проще всего — поставить из магазина Chrome: оттуда расширение обновляется само, ' +
+      'и этот вопрос больше не возникнет. Старую версию перед этим удалите в <span class="mono">chrome://extensions</span>. ' +
+      'Ссылки не пропадут — они хранятся здесь, на странице.</p>' +
+      '<div class="sheet-foot" style="margin:0 0 16px;justify-content:flex-start"><a class="btn btn-primary" href="' + EXT_STORE + '" target="_blank" rel="noopener">Открыть в магазине</a></div>' +
+      '<p class="hint" style="margin-bottom:6px"><b>Или по-старому, папкой</b></p>'
+    : '';
+  openSheet('<h2>Обновить расширение</h2>' +
+    '<p class="hint">У вас версия <b>' + esc(extVersion) + '</b>, свежая — <b>' + esc(extLatest) + '</b>. ' +
+    'Chrome сам не обновляет расширения, поставленные папкой, поэтому один раз руками — минута.</p>' +
+    store +
+    '<ol class="steps">' +
+      '<li>Скачайте свежий архив: <a href="' + EXT_ZIP + '" style="color:var(--accent)">zakladka-extension.zip</a> — и распакуйте.</li>' +
+      '<li>Замените им <b>старую папку расширения</b> — ту, что выбирали при установке. Удобнее всего: удалите старую и положите новую на её место под тем же именем.</li>' +
+      '<li>Откройте <span class="mono">chrome://extensions</span> и нажмите круглую стрелку <b>«Обновить»</b> на карточке ZAKLADKA.</li>' +
+      '<li>Перезагрузите эту страницу.</li>' +
+    '</ol>' +
+    '<p class="hint">Ставили через git? Тогда хватит <span class="mono">git pull</span> в папке расширения и пункта 3.</p>' +
+    '<div class="sheet-foot"><button class="btn" data-close>Понятно</button></div>');
+}
+
 async function backupSheet(){
   if(!bridge) return toast('Нужно расширение — копию хранит оно');
   const r = await backupNow(true);
@@ -2080,6 +2143,8 @@ $('#col').addEventListener('click', e => {
     const cardEl = act.closest('.card');
     if(k === 'new-folder') return createFolder(null);
     if(k === 'clear-demo') return clearDemo();
+    if(k === 'ext-update') return extUpdateSheet();
+    if(k === 'ext-later'){ ui.extSkip = extLatest; saveUi(); return renderCol(); }
     if(head){
       const fid = head.dataset.fid || null;
       if(k === 'add-here') return addSheet('', fid);
