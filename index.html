@@ -1080,12 +1080,15 @@ addEventListener('message', e => {
     /* Расширение называет папку само. '@at' и отсутствие поля значат «куда
        сейчас складываю»: папку могли переименовать или удалить, пока письмо
        шло, — поэтому проверяем, что она ещё есть. */
-    const to = (d.folder === undefined || d.folder === '@at') ? ui.at
+    const mine = d.folder === undefined || d.folder === '@at';
+    const named = d.folder === '@new' && String(d.newFolder || '').trim().slice(0, 60);
+    const to = mine ? ui.at
+             : named ? () => folderByName(named)
              : (byId(d.folder) ? d.folder : null);
     /* Когда папку назвали снаружи, активную не трогаем: человек её выбирал
        здесь, а сохранял из попапа мимоходом. */
-    const keepAt = (d.folder === undefined || d.folder === '@at') ? undefined : (ui.at || null);
-    const where = folderLabel(to);
+    const keepAt = mine ? undefined : (ui.at || null);
+    const where = named || folderLabel(typeof to === 'function' ? null : to);
     addChecked(items, to).then(made => {
       if(!made.length) return;
       if(keepAt !== undefined && (ui.at || null) !== keepAt){ ui.at = keepAt; markTarget(); saveUi(); }
@@ -1169,6 +1172,9 @@ let fresh = new Set();
 function addLinks(items, folder){
   if(!items.length) return [];
   pushUndo();
+  /* Папка может быть обещанием: расширение присылает имя, а не id. Создаём её
+     после pushUndo — иначе отмена вернула бы состояние с пустой новой папкой. */
+  if(typeof folder === 'function') folder = folder();
   let order = linksIn(folder).length;
   const made = [];
   for(const it of items){
@@ -1572,6 +1578,8 @@ function helpSheet(){
       : '<p class="hint">Сейчас оно не подключено — как поставить, написано ниже.</p>') +
     '<ul>' +
     '<li><b>Показывает открытые вкладки.</b> Кнопка с книгой наверху. Перетащите вкладку в папку — ссылка сохранится, а вкладка закроется.</li>' +
+    '<li><b>Сохраняет вкладку из окошка у значка</b> — с выбором папки, не открывая ZAKLADKA. '+
+      'Тихая точка на значке значит, что страница уже здесь.</li>' +
     '<li><b>Узнаёт настоящие названия страниц.</b> Без него название собирается из самого адреса.</li>' +
     '<li><b>Хранит запасную копию</b> ссылок у себя — она переживёт очистку данных браузера.</li></ul>' +
     '<p class="hint"><kbd class="mono">⌘⇧S</kbd> — сохранить текущую вкладку и закрыть её, <kbd class="mono">⌘⇧K</kbd> — окно расширения.</p>' +
