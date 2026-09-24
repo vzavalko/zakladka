@@ -797,7 +797,27 @@ function persist(){
 }
 function commit(){ persist(); render(); }
 function restore(json){ state = JSON.parse(json); commit(); }
-function flushHeldRemote(){}
+/* ── вторая вкладка ZAKLADKA ──
+   Хранилище у открытых вкладок общее, а состояние в памяти у каждой своё, и
+   persist() пишет его целиком. Без этого вкладка, которую давно не трогали,
+   одной правкой затирала всё, что сделали в другой: и удаление, и ссылку,
+   которую расширение отдало не ей. Поэтому чужую запись подхватываем сразу.
+   Посреди правки на месте или перетаскивания перерисовывать нельзя — держим
+   в heldRemote, их концовки сами зовут flushHeldRemote(). */
+addEventListener('storage', e => {
+  if(e.key !== LS || e.newValue === null) return;
+  heldRemote = e.newValue;
+  flushHeldRemote();
+});
+function flushHeldRemote(){
+  if(heldRemote === null || editing || dnd) return;
+  const json = heldRemote; heldRemote = null;
+  if(json === snapshot()) return;
+  try{ state = JSON.parse(json); }catch(e){ return; }
+  /* отмена хранит снимки целиком: шаг назад вернул бы и чужие правки */
+  undoStack.length = 0; redoStack.length = 0;
+  render();
+}
 
 const SYNC_TXT = { ok:'Сохранено в этом браузере', busy:'Сохраняю…', err:'Не удалось сохранить — возможно, кончилось место' };
 function setSync(st){
@@ -1214,6 +1234,10 @@ function createFolder(parent){
     if(el){ el.scrollIntoView({ block:'center', behavior:'smooth' }); editInline(el, v => renameFolder(f.id, v)); }
   });
 }
+function renameLink(id, title){
+  const l = state.links.find(x => x.id === id); if(!l) return render();
+  pushUndo(); l.title = title; delete l.demo; commit();
+}
 function renameFolder(id, name){
   const f = byId(id); if(!f) return;
   name = String(name || '').trim().slice(0,80);
@@ -1278,6 +1302,7 @@ function removeLink(id){
 function moveLink(id, folder, index){
   const l = state.links.find(x => x.id === id); if(!l) return false;
   folder = folder || null;
+  if(folder && !byId(folder)) return false;   /* папку могли удалить в другой вкладке */
   const from = l.folder || null;
   const sibs = linksIn(folder).filter(x => x.id !== id);
   const at = index == null ? sibs.length : clamp(index, 0, sibs.length);
@@ -1296,6 +1321,7 @@ function moveFolder(id, parent, index){
   parent = parent || null;
   if(id === parent || (parent && isAncestor(id, parent))) return false;
   const f = byId(id); if(!f) return false;
+  if(parent && !byId(parent)) return false;
   const from = f.parent || null;
   const sibs = kidsOf(parent).filter(x => x.id !== id);
   const at = index == null ? sibs.length : clamp(index, 0, sibs.length);
@@ -1377,8 +1403,10 @@ function editInline(el, done){
     el.removeEventListener('keydown', onKey);
     el.removeEventListener('blur', onBlur);
     const v = el.textContent.trim();
-    if(ok && v && v !== original) done(v); else render();
+    /* сначала чужая запись, пришедшая за время правки, своя — поверх неё;
+       поэтому done() ищет ссылку или папку по id, а не держит объект */
     flushHeldRemote();
+    if(ok && v && v !== original) done(v); else render();
   };
   const onKey = e => {
     e.stopPropagation();
@@ -1435,7 +1463,7 @@ function linkMenu(l, x, y, owner){
     '-',
     { k:'edit', label:'Переименовать', icon:ICO.edit, run:()=>{
         const el = document.querySelector('.card[data-id="' + l.id + '"] [data-title]');
-        if(el) editInline(el, v => { pushUndo(); l.title = v; delete l.demo; commit(); });
+        if(el) editInline(el, v => renameLink(l.id, v));
       } },
     { k:'url', label:'Изменить адрес', icon:ICO.edit, run:()=>editUrlSheet(l) },
     { k:'move', label:'Переместить в папку…', icon:ICO.folder, run:()=>moveSheet(l) },
@@ -2026,7 +2054,7 @@ $('#col').addEventListener('click', e => {
       e.preventDefault();
       const l = state.links.find(x => x.id === cardEl.dataset.id); if(!l) return;
       if(k === 'rm') return removeLink(l.id);
-      if(k === 'edit') return editInline(cardEl.querySelector('[data-title]'), v => { pushUndo(); l.title = v; delete l.demo; commit(); });
+      if(k === 'edit') return editInline(cardEl.querySelector('[data-title]'), v => renameLink(l.id, v));
       if(k === 'menu'){ const r = act.getBoundingClientRect(); return linkMenu(l, r.right - 210, r.bottom + 6, act); }
     }
     return;
@@ -2184,8 +2212,10 @@ function edgeScroll(y){
 function onUp(e){
   if(!dnd || e.pointerId !== dnd.pid) return;
   const d = dnd;
-  if(d.armed){ dragEndAt = Date.now(); applyDrop(d); }
+  /* endDrag() применит чужую запись, пришедшую за время переноса, — перенос
+     ложится поверх неё, а не затирает */
   endDrag();
+  if(d.armed){ dragEndAt = Date.now(); applyDrop(d); }
 }
 function applyDrop(d){
   const t = d.drop; if(!t) return;
