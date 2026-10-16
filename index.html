@@ -2074,14 +2074,15 @@ function claudeTask(){
     '',
     '5. Скажи мне перезагрузить страницу ZAKLADKA.',
     '',
-    'Ничего, кроме папки расширения, не трогай.'
+    'Ничего, кроме папки расширения, не трогай. Если что-то не сойдётся — скажи,',
+    'что именно, и не трогай файлы наугад.'
   ].join('\n');
 }
 const claudeLink = () => 'claude://code/new?source=zakladka&q=' + encodeURIComponent(claudeTask());
 function extClaude(){
   location.href = claudeLink();
   /* Схема молчит, если приложения нет, — скажем об этом сами. */
-  setTimeout(() => toast('Открываю Claude с готовым заданием. Не открылся — значит он не установлен, тогда «Как обновить».'), 400);
+  setTimeout(() => toast('Claude откроется с готовым заданием — отправьте его. Не открылся — значит он не установлен.'), 400);
 }
 
 function extUpdateSheet(){
@@ -2095,8 +2096,8 @@ function extUpdateSheet(){
   openSheet('<h2>Обновить расширение</h2>' +
     '<p class="hint">У вас версия <b>' + esc(extVersion) + '</b>, свежая — <b>' + esc(extLatest) + '</b>. ' +
     'Chrome сам не обновляет расширения, поставленные папкой, поэтому один раз руками — минута.</p>' +
-    '<p class="hint">Если у вас стоит <b>Claude</b>, делать ничего не нужно: он найдёт папку расширения сам, ' +
-    'заменит её свежей и перезагрузит расширение.</p>' +
+    '<p class="hint">Если у вас стоит <b>Claude</b>, он откроется с готовым заданием — останется нажать ' +
+    '<kbd class="mono">Enter</kbd>. Дальше сам: найдёт папку расширения, заменит её свежей и перезагрузит.</p>' +
     '<div class="sheet-foot" style="margin:0 0 16px;justify-content:flex-start">' +
       '<button class="btn btn-primary" id="ext-claude-go">Обновить через Claude</button></div>' +
     '<p class="hint" style="margin-bottom:6px"><b>Или руками</b></p>' +
