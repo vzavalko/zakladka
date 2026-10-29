@@ -778,7 +778,7 @@ function seed(){
     L(read.id,'https://habr.com/ru/feed/','Хабр — лента',1),
     L(tools.id,'https://regex101.com/','regex101 — отладка регулярок',0),
     L(tools.id,'https://caniuse.com/','Can I use',1),
-    L(null,'https://claude.ai/','Claude',0)
+    L(tools.id,'https://claude.ai/','Claude',2)
   ]};
 }
 const byId = id => state.folders.find(f => f.id === id) || null;
@@ -883,8 +883,24 @@ const searchHits = () => {
 };
 const hasMatch = (fid, m) => subtreeIds(fid).some(id => state.links.some(l => l.folder === id && m.has(l.id)));
 
+/* Раздела «Без папки» нет: ссылка всегда лежит в какой-то папке. Всё, что
+   оказалось в корне (старые данные, вставка без папки, удалённая папка),
+   подбираем в «Разное» — заводим её, если нужно. */
+function adoptRoot(){
+  const loose = state.links.filter(l => !l.folder);
+  if(!loose.length) return;
+  let f = state.folders.find(x => !x.parent && x.name === 'Разное');
+  if(!f){
+    f = { id:uid(), name:'Разное', parent:null, order:kidsOf(null).length, color:state.folders.length % 6, open:true };
+    state.folders.push(f);
+  }
+  let order = linksIn(f.id).length;
+  loose.sort((a,b)=>a.order-b.order).forEach(l => { l.folder = f.id; l.order = order++; });
+  lsWrite(LS, state);
+}
 function renderCol(){
   const col = $('#col');
+  adoptRoot();
   if(ui.at && !byId(ui.at)) ui.at = null;   /* папку могли удалить */
   if(!state.folders.length && !state.links.length){ col.innerHTML = emptyAll(); return; }
 
@@ -899,8 +915,6 @@ function renderCol(){
     h += '<div class="banner"><span>Папки и ссылки — пример, чтобы было видно устройство.</span>' +
          '<button class="btn" data-act="clear-demo">Убрать пример</button></div>';
 
-  const rootLinks = m ? linksIn(null).filter(l => m.has(l.id)) : linksIn(null);
-  if(rootLinks.length) h += secRoot(rootLinks, !!m);
   for(const f of kidsOf(null)) h += secFolder(f, m, 0);
 
   if(m && !m.size) h += emptyBox('Ничего не нашлось', 'По запросу «' + esc(ui.q) + '» нет ни одной ссылки.');
@@ -936,13 +950,6 @@ function secHead(fid, name, dot, count, opts){
       '<button data-act="open-all" title="Открыть все ссылки" aria-label="Открыть все ссылки">' + ICO.ext + '</button>' +
       (o.menu === false ? '' : '<button data-act="menu" title="Ещё" aria-label="Ещё">' + ICO.dots + '</button>') +
     '</span></div>';
-}
-function secRoot(links, searching){
-  const open = searching || ui.rootOpen !== false;
-  return '<div class="sec' + (open ? ' open' : '') + '" data-fid="">' +
-    secHead('', 'Без папки', 'var(--muted)', linksIn(null).length, { menu:false }) +
-    '<div class="sec-wrap"><div class="sec-clip"><div class="sec-body">' +
-      linksGrid(links, '') + '</div></div></div></div>';
 }
 function secFolder(f, m, depth){
   if(m && !hasMatch(f.id, m)) return '';
@@ -1541,7 +1548,7 @@ function ask(title, text, okLabel, danger){
   });
 }
 function folderOptions(sel, skip){
-  let out = '<option value="">Без папки</option>';
+  let out = '';
   const walk = (parent, depth) => {
     for(const f of kidsOf(parent)){
       if(skip && (f.id === skip || isAncestor(skip, f.id))) continue;
